@@ -1,0 +1,7 @@
+site_name: Technical Docs
+nav:
+  - Home: index.md
+markdown_extensions:
+  - tables
+  - codehilite:
+      use_pygments: true

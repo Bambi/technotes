@@ -1,0 +1,27 @@
+# emanote configuration file
+page:
+  siteTitle: Technical Notes
+  headHtml: |
+    <snippet var="js.highlightjs"/>
+
+template:
+  theme: green
+
+  # You can add your own variables here, like editBaseUrl.
+  # See after-note.tpl to see where editBaseUrl gets used.
+  # editBaseUrl: https://github.com/srid/emanote-template/edit/master
+
+  # Uncomment this to get neuron-style pages
+  # name: /templates/layouts/note
+  # layout:
+  #   note:
+  #     containerClass: container mx-auto max-w-screen-lg
+
+  sidebar:
+    collapsed: true
+
+  # If you are hosting on GitLab Pages, you may want to remove this.
+  urlStrategy: pretty
+
+  toc:
+    enable: true
