@@ -45,7 +45,7 @@ zig.md
 nb.md
 flake.lock
 flake.nix
-mkdocs.yml
+
 notes
 README.md
-shell.nix
+
