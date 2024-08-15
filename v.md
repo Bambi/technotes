@@ -1,4 +1,4 @@
-# V
+# V Language
 ## Basics
 ### Functions
 Like Zig:
