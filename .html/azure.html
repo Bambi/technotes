@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<title>azure</title>
+<link rel="stylesheet" href="file:///home/as/.config/rucola/default_dark.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/go.min.js"></script>
+<script>hljs.highlightAll();</script>
+<h1>Azure</h1>
+<h2>Format VHD (qemu vpc)</h2>
+<p>= format linux raw + 512 bytes.
+To create a VHD file:</p>
+<pre><code class="language-sh">qemu-img convert -f raw -o subformat=fixed,force_size -O vpc disk.img disk.vhd
+</code></pre>
+<p>To get a raw disk from a VHD file (warning: qemu <em>does not</em> auto-detect VHD files):</p>
+<pre><code class="language-sh">qemu-img convert -f vpc -O raw disk.vhd disk.img
+</code></pre>
+<p>See command <a href="https://en.wikibooks.org/wiki/QEMU/Images#Image_types">here</a>.</p>
+<h2>Networking</h2>
+<p>A virtual router is created in every sub-network.
+Its address is the first available address in the network (<!-- raw HTML omitted -->.1). It is not pingable.</p>
+<p>Inside a network each sub-network is automatically reachable (routing routes are automatically created).</p>
+<p>In a virtual network you must use RFC1918 addresses except theses:</p>
+<ul>
+<li><code>224.0.0.0/4</code> (Multicast)</li>
+<li><code>255.255.255.255/32</code> (Broadcast)</li>
+<li><code>127.0.0.0/8</code> (Loopback)</li>
+<li><code>169.254.0.0/16</code> (Link-local)</li>
+<li><code>168.63.129.16/32</code> (Internal DNS)</li>
+</ul>
+<p>Within a subnet some addresses are reserved:</p>
+<ul>
+<li><code>x.x.x.0</code>: Network address</li>
+<li><code>x.x.x.1</code>: Reserved by Azure for the default gateway</li>
+<li><code>x.x.x.2, x.x.x.3</code>: Reserved by Azure to map the Azure DNS IPs to the VNet space</li>
+<li><code>x.x.x.255</code>: Network broadcast address</li>
+</ul>
+<p>DHCP via unicast, multicast, broadcast IP-in-IP and GRE packets are dropped within virtual networks.</p>
+<h2>Routing</h2>
+<p>See <a href="https://docs.microsoft.com/en-us/azure/virtual-network/virtual-networks-udr-overview">here</a>.
+Next hop types:</p>
+<ul>
+<li>Virtual appliance: a virtual machine</li>
+<li>Virtual network gateway (VPN)</li>
+<li>None: dropped traffic</li>
+<li>Internet</li>
+<li>Virtual network</li>
+</ul>
+<p>A route is selected using the longuest prefix match algorithm.
+User defined routes have a higher priority than system routes.</p>
+<h2>Problems</h2>
+<p>168.63.129.16 should be accessible (but is not pingable). Test it with:
+<code>wget http://168.63.129.16/?comp=versions</code>.</p>

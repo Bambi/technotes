@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<title>jujutsu</title>
+<link rel="stylesheet" href="file:///home/as/.config/rucola/default_dark.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/go.min.js"></script>
+<script>hljs.highlightAll();</script>
+<h1>Jujutsu</h1>
+<p>SCM Compatible with Git. Can work in parallel with Git.</p>
+<h2>Configuration</h2>
+<pre><code>jj config set --user user.name &quot;Antoine Sgambato&quot;
+jj config set --user user.email &quot;176003+Bambi@users.noreply.github.com&quot;
+</code></pre>
+<h2>Revisions &amp; Revsets</h2>
+<p>Revisions are equivalent to git commits.
+Revsets are a set of revisions (git commit ranges). They are build with a functional language.
+<a href="https://github.com/martinvonz/jj/blob/f3d6616057fb3db3f9227de3da930e319d29fcc7/docs/revsets.md">Details here</a>.</p>
+<h2>Changes</h2>
+<p>With jj the current work (git status) is the current revision (commit with Git).
+To add a description use <code>jj describe</code>.
+To start a new revision use <code>jj new</code>: this will record the current changes (git commit)
+and start a new revision that you should later describe.
+The <code>describe</code> and <code>new</code> command can be combined with <code>jj new -m &lt;description&gt;</code>.</p>
+<blockquote>
+<p>[!Warning] the working copy IS the current revision (there is no index).
+This means that if you create an other revison off some other revision (some other branch)
+the working copy is not 'taken with you' to the new revision: you will get a new revision
+with a clean working copy.</p>
+</blockquote>
+<p>By default the describe command modify the current revision. But it can be used
+on any revision with the <code>-r</code> parameter.</p>
+<p>Any revision can be modified: <code>jj edit -r &lt;rev&gt;</code> allows that.</p>
+<p>The <code>new</code> command creates a new revision with the current one the parent by default.
+A revision can have as many parents as necessary with <code>jj new &lt;rev1&gt; &lt;rev2&gt; ...</code>.
+This is how a merge is done with jujutsu.</p>
+<h2>Log</h2>
+<p><code>jj log</code> shows commit history.
+Each commit has 2 ids (hashes):</p>
+<ul>
+<li>the first one is the <code>change id</code>: this id will never change even if the commit is
+moved around the history.</li>
+<li>the second id is the <code>commit id</code>: this id is the same as the git commit hash and
+will be modified if the commit is re-written.</li>
+</ul>
+<h2>Anonymous Branches</h2>
+<p>With jujtsu branches are mainly anonymous (they do not have name). You can always
+refer to any revision (and branches) with their change-id.
+To list all branches in the repo: <code>jj log -r 'heads(all())'</code>.</p>
+<h2>Named Branches</h2>
+<p>Named branches are mostly used as an interoperability feature with git.</p>
+<p>To create a branch: <code>jj branch create &lt;branch name&gt;</code>. The current revision will
+be the tip of the branch.</p>
+<blockquote>
+<p>[!Warning] jj branches do not move automatically (they behave more like a git tag).
+Revision created on top of a branch will not be part of the branch!</p>
+</blockquote>
+<p>To update a branch: <code>jj branch set &lt;branch name&gt;</code>. Move the branch to the current revision.</p>
+<h2>Working With Git</h2>
+<pre><code class="language-sh">  git clone &lt;git repo&gt;
+  jj git init &lt;git repo&gt; #or
+  jj init --git-repo . # for older versions
+</code></pre>
+<p>A <code>.jj</code> directory is created in the repo root directory (besides <code>.git</code>).
+From now you can use either jj or git commands on the repo.</p>
+<p>Commits are shared between jj and git but branches are not automatically.
+To share a branch (master in this example): <code>jj branch track master@origin</code>.</p>
+<p>You can <code>jj git push</code> to push changes to a remote or <code>jj git fetch</code> to get changes.
+There is not <code>jj git pull</code> command.</p>
+<h3>Recaps</h3>
+<p>Creating new commits on a git repository:</p>
+<ul>
+<li>clone the repo: <code>git clone &lt;repo&gt;</code></li>
+<li>init a jj git repo: <code>jj init --git-repo &lt;repo&gt;</code></li>
+<li>track the branch from jj <code>jj branch track &lt;branch&gt;@origin</code>
+(allows you to issue <code>jj fetch</code> commands)</li>
+<li>create one or more revisions with <code>jj new / jj describe</code></li>
+<li>update your branch: <code>jj branch set &lt;branch&gt;</code></li>
+<li>push you changes: <code>jj git push --branch &lt;branch&gt;</code></li>
+</ul>
+<h2>References</h2>
+<ul>
+<li><a href="https://v5.chriskrycho.com/essays/jj-init/">jj init</a></li>
+<li><a href="https://steveklabnik.github.io/jujutsu-tutorial/">jujutsu tutorial/</a></li>
+<li><a href="https://martinvonz.github.io/jj/v0.13.0/tutorial/">jujutsu official tutorial</a></li>
+</ul>

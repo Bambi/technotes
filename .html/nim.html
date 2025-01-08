@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<title>nim</title>
+<link rel="stylesheet" href="file:///home/as/.config/rucola/default_dark.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/go.min.js"></script>
+<script>hljs.highlightAll();</script>
+<h1>Nim</h1>
+<h2>Basic</h2>
+<p>Comments:</p>
+<ul>
+<li><code>#</code>: Can be used anywhere</li>
+<li><code>##</code>: Documentation comment</li>
+<li><code>#[</code> and <code>]#</code>: Multi-line comment ; can be nested</li>
+</ul>
+<p>The <code>var</code> statement declares a new local or global variable.</p>
+<p>The <code>const</code> statement declares a symbol bound to a value knowed at compile time.</p>
+<p>The <code>let</code> statement is like <code>var</code> but after their initialization their value cannot change.</p>
+<p><code>=</code> is the assigment operator and can be overload:</p>
+<pre><code class="language-nim">var x, y = 3
+</code></pre>
+<h2>Flow Control</h2>
+<h3>If Statement</h3>
+<p>With <code>if</code>, <code>elif</code> &amp; <code>else</code>.</p>
+<h3>Case Statement</h3>
+<p>With <code>case</code>, <code>of</code>, <code>else</code>. This statement must cover every value that the case may contain.</p>
+<h3>While Statement</h3>
+<p>With <code>while</code> ; for simple loop constructs.</p>
+<h3>For Statement</h3>
+<p>With <code>for</code> &amp; <code>in</code>. Used to loop over any element an iterator provides.</p>
+<h3>Block Statement And Break</h3>
+<p>Previous statements each open an implicit new scope and every variable created inside
+a block is destroyed when leaving the block.</p>
+<p>The block statement can be used to open a new block explicitly:</p>
+<pre><code class="language-nim">block myblock: # the block label (myblock) is optional
+  var x = &quot;hi&quot;
+echo x # does not work either
+</code></pre>
+<p>The <code>break</code> statement can be used to leave a block. The <code>continue</code> statement jump to
+the beginning of a block.</p>
+<h3>When Statement</h3>
+<p>With <code>when</code>, <code>elif</code> &amp; <code>else</code>. Like <code>if</code> but:</p>
+<ul>
+<li>Each condition must be a constant expression since it is evaluated by the compiler.</li>
+<li>The statements within a branch do not open a new scope.</li>
+<li>The compiler checks the semantics and produces code only for the statements that
+belong to the first condition that evaluates to <code>true</code>.</li>
+</ul>
+<p>Similar to C <code>#ifdef</code>.</p>
+<h2>Procedures</h2>
+<p>Defined with the <code>proc</code> keyword:</p>
+<pre><code class="language-nim">proc yes(question: string): bool =
+  echo question, &quot; (y/n)&quot;
+  while true:
+    case readLine(stdin)
+    of &quot;y&quot;, &quot;Y&quot;, &quot;yes&quot;, &quot;Yes&quot;: return true
+    of &quot;n&quot;, &quot;N&quot;, &quot;no&quot;, &quot;No&quot;: return false
+    else: echo &quot;Please be clear: yes or no&quot;
+</code></pre>
+<p>A procedure that returns a value has an implicit <code>result</code> variable declared
+that represents the return value. A <code>return</code> statement with no expression is
+shorthand for <code>return result</code>. The <code>result</code> value is always returned automatically
+at the end of a procedure if there is no <code>return</code> statement at the exit.</p>
+<p>A procedure that does not have any <code>return</code> statement and does not use the special
+<code>result</code> variable returns the value of its last expression.</p>
+<h3>Parameters</h3>
+<p>Parameters are immutable in the procedure body.
+If a mutable variable is needed inside the procedure,
+it has to be declared with var in the procedure body. Shadowing the parameter
+name is possible, and actually an idiom.</p>
+<p>If the procedure needs to modify the argument for the caller, a <code>var</code> parameter can be used:</p>
+<pre><code class="language-nim">proc divmod(a, b: int; res, remainder: var int) =
+  res = a div b        # integer division
+  remainder = a mod b  # integer modulo operation
+
+var
+  x, y: int
+divmod(8, 5, x, y) # modifies x and y
+echo x
+echo y
+</code></pre>
+<h3>Discard Statement</h3>
+<p>To call a procedure that returns a value just for its side effects and
+ignoring its return value, a <code>discard</code> statement must be used. Nim does not
+allow silently throwing away a return value:</p>
+<pre><code class="language-nim">discard yes(&quot;May I ask a pointless question?&quot;)
+</code></pre>
+<p>The return value can be ignored implicitly if the called proc/iterator has
+been declared with the <code>discardable</code> pragma:</p>
+<pre><code class="language-nim">proc p(x, y: int): int {.discardable.} =
+  return x + y
+
+p(3, 4) # now valid
+</code></pre>
+<h3>Named Arguments</h3>
+<p>Arguments to a procedure can be named:</p>
+<pre><code class="language-nim">proc createWindow(x, y, width, height: int; title: string;
+                  show: bool = false): Window =
+   ...
+
+var w = createWindow(show = true, title = &quot;My Application&quot;,
+                     x = 0, y = 0, height = 600, width = 800)
+</code></pre>
+<p>It is also possible to provide default values to procedures arguments.</p>
+<h3>Procedure Overloading</h3>
+<p>Nim provides the ability to overload procedures similar to C++:</p>
+<pre><code class="language-nim">proc toString(x: int): string =
+  result =
+    if x &lt; 0: &quot;negative&quot;
+    elif x &gt; 0: &quot;positive&quot;
+    else: &quot;zero&quot;
+
+proc toString(x: bool): string =
+  result =
+    if x: &quot;yep&quot;
+    else: &quot;nope&quot;
+
+assert toString(13) == &quot;positive&quot; # calls the toString(x: int) proc
+assert toString(true) == &quot;yep&quot;    # calls the toString(x: bool) proc
+</code></pre>
+<h3>Operators</h3>
+<p>Apart from a few built-in keyword operators such as <code>and</code>, <code>or</code>, <code>not</code>,
+operators always consist of these characters: <code>+ - * \ / &lt; &gt; = @ $ ~ &amp; % ! ? ^ . |</code>.</p>
+<p>User-defined operators are allowed. Nothing stops you from defining your
+own <code>@!?+~</code> operator, but doing so may reduce readability.</p>
+<p>To define a new operator enclose the operator in backticks &quot;`&quot;:</p>
+<pre><code class="language-nim">proc `$` (x: myDataType): string = ...
+# now the $ operator also works with myDataType, overloading resolution
+# ensures that $ works for built-in types just like before
+</code></pre>
+<p>The &quot;`&quot; notation can also be used to call an operator just like any other procedure:</p>
+<pre><code class="language-nim">if `==`( `+`(3, 4), 7): echo &quot;true&quot;
+</code></pre>
+<h3>Forward Declaration</h3>
+<p>Every variable, procedure, etc. needs to be declared before it can be
+used. However, this cannot be done for mutually recursive procedures</p>
+<p>The syntax for such a forward declaration is simple: just omit the <code>=</code>
+and the procedure's body.</p>
+<h2>Iterators</h2>
+<pre><code class="language-nim">echo &quot;Counting to ten: &quot;
+for i in countup(1, 10):
+  echo i
+
+iterator countup(a, b: int): int =
+  var res = a
+  while res &lt;= b:
+    yield res
+    inc(res)
+</code></pre>
+<p>Iterators look very similar to procedures, but there are several important differences:</p>
+<ul>
+<li>Iterators can only be called from for loops.</li>
+<li>Iterators cannot contain a <code>return</code> statement (and procs cannot contain a <code>yield</code> statement).</li>
+<li>Iterators have no implicit <code>result</code> variable.</li>
+<li>Iterators do not support recursion.</li>
+<li>Iterators cannot be forward declared (may change in the future).</li>
+</ul>
+<h2>Basic Types</h2>
+<h3>Booleans</h3>
+<p>Type is called <code>bool</code> and can receive 2 values <code>true</code> &amp; <code>false</code>.
+Operators <code>not, and, or, xor, &lt;, &lt;=, &gt;, &gt;=, !=, ==</code> are defined for the bool type.</p>
+<h3>Characters</h3>
+<p>Type is called <code>char</code>, size is 1 byte and literals are enclosed in single quotes.
+Chars can be compared with the <code>==, &lt;, &lt;=, &gt;, &gt;=</code> operators.
+The <code>$</code> operator converts a <code>char</code> to a <code>string</code>.</p>
+<h3>Strings</h3>
+<p>Type is called <code>string</code> and are mutable. They are both zero-terminated and have a field length.
+String's length can be retreived with the <code>len</code> procedure but accessing the terminating
+zero is an error.</p>
+<p>Nim strings can be conterted to <code>cstring</code> without doing a copy.
+The assignment operator for strings copies the string. You can use the <code>&amp;</code>
+operator to concatenate strings and <code>add</code> to append to a string.</p>
+<h3>Integers</h3>
+<p>Nim has these integer types built-in:
+<code>int int8 int16 int32 int64 uint uint8 uint16 uint32 uint64</code>.
+The default integer type is <code>int</code> that has the same size as a pointer.
+Integer literals can have a type suffix to specify a non-default integer type:</p>
+<pre><code class="language-nim">let
+  x = 0     # x is of type `int`
+  y = 0'i8  # y is of type `int8`
+  z = 0'i32 # z is of type `int32`
+  u = 0'u   # u is of type `uint`
+</code></pre>
+<p>The common operators <code>+ - * div mod &lt; &lt;= == != &gt; &gt;=</code> are defined for
+integers. The <code>and or xor not</code> operators are also defined for integers and
+provide bitwise operations. Left bit shifting is done with the <code>shl</code>, right
+shifting with the <code>shr</code> operator. Bit shifting operators always treat their
+arguments as <code>unsigned</code>. For arithmetic bit shifts ordinary multiplication or
+division can be used.</p>
+<h3>Floats</h3>
+<p>Floating-point types built-in: <code>float float32 float64</code>.
+The default float type is <code>float</code> (always 64-bits currently).</p>
+<p>The common operators <code>+ - * / &lt; &lt;= == != &gt; &gt;=</code> are defined for floats and
+follow the IEEE-754 standard.</p>
+<p>Integer types are not converted to floating-point types automatically,
+nor vice versa. Use the <code>toInt</code> and <code>toFloat</code> procs for these conversions.</p>
+<h2>Advanced Types</h2>
+<h3>Enumerations</h3>
+<pre><code class="language-nim">type
+  Direction = enum
+    north, east, south, west
+
+var x = south     # `x` is of type `Direction`; its value is `south`
+</code></pre>
+<p>Each symbol is mapped to an integer value internally. The first symbol is
+represented at runtime by 0.</p>
+<p>The <code>$</code> operator can convert any enumeration value to its name, and the <code>ord</code>
+proc can convert it to its underlying integer value.</p>
+<h3>Ordinal Types</h3>
+<p>Enumerations, integer types, <code>char</code> and <code>bool</code> (and subranges) are called
+ordinal types. Ordinal types have quite a few special operations:</p>
+<p>| Operation	| Comment
+|-----------|--------
+| ord(x)	  | returns the integer value that is used to represent x's value
+| inc(x)	  | increments x by one
+| inc(x, n)	| increments x by n; n is an integer
+| dec(x)	  | decrements x by one
+| dec(x, n)	| decrements x by n; n is an integer
+| succ(x)	  | returns the successor of x
+| succ(x, n)|	returns the n'th successor of x
+| pred(x)	  | returns the predecessor of x
+| pred(x, n)|	returns the n'th predecessor of x</p>
+<h3>Subranges</h3>
+<pre><code class="language-nim">type
+  MySubrange = range[0..5]
+</code></pre>
+<p><code>MySubrange</code> is a subrange of <code>int</code> which can only hold the values 0
+to 5. Assigning any other value to a variable of type <code>MySubrange</code> is a
+compile-time or runtime error.</p>
+<p>The <code>system</code> module defines the important <code>Natural</code> type as <code>range[0..high(int)]</code>
+(<code>high</code> returns the maximal value).</p>
+<h3>Sets</h3>
+<p>The set type models the mathematical notion of a set for ordinal types of certain
+types: <code>int8-int16, uint8/byte-uint16, char, enum</code>.</p>
+<pre><code class="language-nim">type
+  CharSet = set[char]
+var
+  x: CharSet
+x = {'a'..'z', '0'..'9'} # This constructs a set that contains the
+                         # letters from 'a' to 'z' and the digits
+                         # from '0' to '9'
+</code></pre>
+<p>These operations are supported by sets:</p>
+<p>| operation	     | meaning
+|----------------|--------------
+| A + B	         | union of two sets
+| A * B          | intersection of two sets
+| A - B          | difference of two sets (A without B's elements)
+| A == B         | set equality
+| A &lt;= B         | subset relation (A is subset of B or equal to B)
+| A &lt; B	         | strict subset relation (A is a proper subset of B)
+| e in A         | set membership (A contains element e)
+| e notin A	     | A does not contain element e
+| contains(A, e) | A contains element e
+| card(A)        | the cardinality of A (number of elements in A)
+| incl(A, elem)  | same as A = A + {elem}
+| excl(A, elem)  | same as A = A - {elem}</p>
+<h3>Bit Fields</h3>
+<p>Sets are often used to define a type for the flags of a procedure. This is
+a cleaner (and type safe) solution than defining integer constants that have
+to be <code>or</code>'ed together.</p>
+<p>Enum, sets and casting can be used together as in:</p>
+<pre><code class="language-nim">type
+  MyFlag* {.size: sizeof(cint).} = enum
+    A
+    B
+    C
+    D
+  MyFlags = set[MyFlag]
+
+proc toNum(f: MyFlags): int = cast[cint](f)
+proc toFlags(v: int): MyFlags = cast[MyFlags](v)
+
+assert toNum({}) == 0
+assert toNum({A}) == 1
+assert toNum({D}) == 8
+assert toNum({A, C}) == 5
+assert toFlags(0) == {}
+assert toFlags(7) == {A, B, C}
+</code></pre>
+<p>Note how the set turns enum values into powers of 2.
+If using enums and sets with C, use distinct <code>cint</code>.
+For interoperability with C see also the <code>bitsize pragma</code>.</p>
+<h3>Arrays</h3>
+<p>An array is a simple fixed-length container of elements with the same
+type. The array's index type can be any ordinal type.
+Arrays can be constructed using <code>[]</code>:</p>
+<pre><code class="language-nim">type
+  IntArray = array[0..5, int] # an array that is indexed with 0..5
+var
+  x: IntArray
+x = [1, 2, 3, 4, 5, 6]
+for i in low(x) .. high(x):
+  echo x[i]
+</code></pre>
+<p>Multidimensional array can have index of different types:</p>
+<pre><code class="language-nim">type
+  LightTower = array[1..10, array[north..west, BlinkLights]]
+</code></pre>
+<h3>Sequences</h3>
+<p>Sequences are similar to arrays but of dynamic length which may change
+during runtime (like strings). Since sequences are resizable they are always
+allocated on the heap and garbage collected.</p>
+<p>Sequences are always indexed with an <code>int</code> starting at position 0. The len,
+low and high operations are available for sequences too. The notation <code>x[i]</code>
+can be used to access the i-th element of <code>x</code>.</p>
+<p>Sequences can be constructed by the array constructor <code>[]</code> in conjunction
+with the array to sequence operator <code>@</code>. Another way to allocate space for a
+sequence is to call the built-in <code>newSeq</code> procedure.</p>
+<pre><code class="language-nim">var
+  x: seq[int] # a reference to a sequence of integers
+x = @[1, 2, 3, 4, 5, 6] # the @ turns the array into a sequence allocated on the heap
+</code></pre>
+<p>Sequence variables are initialized with <code>@[]</code>.
+The for statement can be used with one or two variables when used with a sequence.</p>
+<pre><code class="language-nim">for value in @[3, 4, 5]:
+  echo value
+# --&gt; 3
+# --&gt; 4
+# --&gt; 5
+
+for i, value in @[3, 4, 5]:
+  echo &quot;index: &quot;, $i, &quot;, value:&quot;, $value
+# --&gt; index: 0, value:3
+# --&gt; index: 1, value:4
+# --&gt; index: 2, value:5
+</code></pre>
+<h3>Open Arrays</h3>
+<p>Often fixed-size arrays turn out to be too inflexible; procedures should
+be able to deal with arrays of different sizes. The <code>openarray</code> type allows
+this. Openarrays are always indexed with an int starting at position
+<code>0</code>. Openarrays can only be used for parameters.</p>
+<pre><code class="language-nim">var
+  fruits:   seq[string]       # reference to a sequence of strings that is initialized with '@[]'
+  capitals: array[3, string]  # array of strings with a fixed size
+
+capitals = [&quot;New York&quot;, &quot;London&quot;, &quot;Berlin&quot;]   # array 'capitals' allows assignment of only three elements
+fruits.add(&quot;Banana&quot;)          # sequence 'fruits' is dynamically expandable during runtime
+fruits.add(&quot;Mango&quot;)
+
+proc openArraySize(oa: openArray[string]): int =
+  oa.len
+
+assert openArraySize(fruits) == 2     # procedure accepts a sequence as parameter
+assert openArraySize(capitals) == 3   # but also an array type
+</code></pre>
+<h3>Varargs</h3>
+<p>A <code>varargs</code> parameter is like an openarray parameter. However, it is also a
+means to implement passing a variable number of arguments to a procedure. The
+compiler converts the list of arguments to an array automatically:</p>
+<pre><code class="language-nim">proc myWriteln(f: File, a: varargs[string]) =
+  for s in items(a):
+    write(f, s)
+  write(f, &quot;\n&quot;)
+
+myWriteln(stdout, &quot;abc&quot;, &quot;def&quot;, &quot;xyz&quot;)
+# is transformed by the compiler to:
+myWriteln(stdout, [&quot;abc&quot;, &quot;def&quot;, &quot;xyz&quot;])
+</code></pre>
+<h3>Objects</h3>
+<p>An object is a value type, which means that when an object is assigned to
+a new variable all its components are copied as well.</p>
+<p>Each object type <code>Foo</code> has a constructor <code>Foo(field: value, ...)</code> where all of
+its fields can be initialized. Unspecified fields will get their default value.</p>
+<pre><code class="language-nim">type
+  Person = object
+    name: string
+    age: int
+
+var person1 = Person(name: &quot;Peter&quot;, age: 30)
+
+echo person1.name # &quot;Peter&quot;
+echo person1.age  # 30
+</code></pre>
+<p>Object fields that should be visible from outside the defining module have
+to be marked with <code>*</code>:</p>
+<pre><code class="language-nim">type
+  Person* = object # the type is visible from other modules
+    name*: string  # the field of this type is visible from other modules
+    age*: int
+</code></pre>
+<h3>References &amp; Pointers</h3>
+<p>Nim distinguishes between traced and untraced references. Untraced
+references are also called pointers. Traced references point to objects in a
+garbage-collected heap, untraced references point to manually allocated objects
+or objects elsewhere in memory. Thus untraced references are unsafe. However,
+for certain low-level operations (e.g. accessing the hardware), untraced
+references are necessary.</p>
+<p>Traced references are declared with the <code>ref</code> keyword; untraced references
+are declared with the <code>ptr</code> keyword.</p>
+<pre><code class="language-nim">type
+  Node = ref object
+    le, ri: Node
+    data: int
+
+var n = Node(data: 9)
+echo n.data
+# no need to write n[].data; in fact n[].data is highly discouraged!
+</code></pre>
+<p>To allocate a new traced object, the built-in procedure new can be used:</p>
+<pre><code class="language-nim">var n: Node
+new(n)
+</code></pre>
+<p>To deal with untraced memory, the procedures <code>alloc, dealloc and realloc</code> can
+be used. The system module's documentation contains further details.</p>
+<p>If a reference points to nothing, it has the value <code>nil</code>.</p>
+<h3>Procedural Type</h3>
+<p>A procedural type is a pointer to a procedure. <code>nil</code> is
+an allowed value for a variable of a procedural type. Nim uses procedural
+types to achieve functional programming techniques:</p>
+<pre><code class="language-nim">proc greet(name: string): string =
+  &quot;Hello, &quot; &amp; name &amp; &quot;!&quot;
+
+proc bye(name: string): string =
+  &quot;Goodbye, &quot; &amp; name &amp; &quot;.&quot;
+
+proc communicate(greeting: proc (x: string): string, name: string) =
+  echo greeting(name)
+
+communicate(greet, &quot;John&quot;)
+communicate(bye, &quot;Mary&quot;)
+</code></pre>
+<h2>Modules</h2>
+<p>Modules are files. A module may gain access to the symbols of other module with the
+<code>import</code> statement. Only top-level symbols that are marked with <code>*</code> are exported:</p>
+<pre><code class="language-nim"># Module A
+var
+  x*, y: int
+
+proc `*` *(a, b: seq[int]): seq[int] =
+  # allocate a new sequence:
+  newSeq(result, len(a))
+  # multiply two int sequences:
+  for i in 0 ..&lt; len(a): result[i] = a[i] * b[i]
+
+when isMainModule:
+  # test the new `*` operator for sequences:
+  assert(@[1, 2, 3] * @[1, 2, 3] == @[1, 4, 9])
+</code></pre>
+<p>Each module has a special magic constant <code>isMainModule</code> that is true if the
+module is compiled as the main file.</p>
+<h1>Object Oriented Programming</h1>
+<h2>Inheritance</h2>
+<p>To enable inheritance with runtime type information the object needs to inherit
+from <code>RootObj</code>. This can be done directly, or indirectly by inheriting from an
+object that inherits from <code>RootObj</code>. Usually types with inheritance are also
+marked as <code>ref</code> types even though this isn't strictly enforced. To check at
+runtime if an object is of a certain type, the <code>of</code> operator can be used.</p>
+<pre><code class="language-nim">type
+  Person = ref object of RootObj
+    name*: string  # the * means that `name` is accessible from other modules
+    age: int       # no * means that the field is hidden from other modules
+  
+  Student = ref object of Person # Student inherits from Person
+    id: int                      # with an id field
+
+var
+  student: Student
+  person: Person
+assert(student of Student) # is true
+# object construction:
+student = Student(name: &quot;Anton&quot;, age: 5, id: 2)
+echo student[]
+</code></pre>
+<h1>References</h1>
+<ul>
+<li><a href="https://nim-by-example.github.io/getting_started/">Nim By Example</a></li>
+<li><a href="https://scripter.co/tags/nim/">Nim Notes</a></li>
+<li><a href="https://ssalewski.de/nimprogramming.html">Nim Programming</a></li>
+<li><a href="https://xmonader.github.io/nimdays/book_intro.html">Nim Days</a></li>
+<li><a href="https://peterme.net/">Peter's DevLog</a></li>
+<li><a href="https://nim-lang.org/docs/manual.html">Nim Manual</a></li>
+<li><a href="https://nim-lang.org/docs/lib.html">Nim Std Lib</a></li>
+<li><a href="https://internet-of-tomohiro.netlify.app/index.en.html">Internet of Tomohiro</a></li>
+</ul>
+<p>C FFI:</p>
+<ul>
+<li><a href="https://blog.johnnovak.net/2018/07/07/creating-a-nim-wrapper-for-fmod/">Creating a Nim Wrapper</a></li>
+<li><a href="https://livebook.manning.com/book/nim-in-action/chapter-8/">Nim in Action: Chapter 8</a></li>
+<li><a href="https://nekonya.cyou/2020/05/17/nim-xue-xi-ji-lu/">Nim C Biding</a></li>
+<li><a href="https://goran.krampe.se/2014/10/16/nim-wrapping-c/">Nim Wrapping C</a></li>
+</ul>

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<title>home-manager</title>
+<link rel="stylesheet" href="file:///home/as/.config/rucola/default_dark.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/go.min.js"></script>
+<script>hljs.highlightAll();</script>
+<h2>Home Manager</h2>
+<p>Specify a user environment (software and configuration) with the Nix language.
+Can be used with or without NixOS.</p>
+<h3>Home Manager as a NixOS Module</h3>
+<p>Can be used only on NixOS with the folowing procedure:</p>
+<ul>
+<li>add home-manager channel with <code>sudo nix-channel --add https://github.com/nix-community/home-manager/archive/release-23.05.tar.gz home-manager</code>
+followed by <code>sudo nix-channel --update</code>.</li>
+<li>add home-manager to your NixOS <code>configuration.nix</code> file with <code>import &lt;home-manager/nixos&gt;</code>.</li>
+<li>add user configuration with:</li>
+</ul>
+<pre><code class="language-nix">home-manager.users.as = { pkgs, ... }: {
+  home.stateVersion = &quot;23.05&quot;;
+  home.packages = [ pkgs.bat pkgs.git ];
+}
+</code></pre>
+<ul>
+<li>update configuration with <code>sudo nixos-rebuild switch</code></li>
+</ul>
+<p>With this solution you update your home configuration together with your
+system configuration. This might be an advantage when building a virtual
+machine or a container.</p>
+<h3>Standalone Home Manager</h3>
+<p>Only solution if you do not use NixOS:</p>
+<ul>
+<li>add and update home-manager channel with same commands as previous without <code>sudo</code>.</li>
+<li>install home-manager with either:
+<ul>
+<li><code>nix-env -iA nixos.home-manager</code> if you use nix without NixOS.</li>
+<li><code>nix-shell '&lt;home-manager&gt;' -A install</code> if you use NixOS.</li>
+</ul>
+</li>
+<li>configure your environment with the <code>~/.config/home-manager/home.nix</code> file.</li>
+<li>update your configuration with the command <code>home-manager switch</code>.</li>
+</ul>
+<h3>Schema</h3>
+<p>There is a <a href="https://nix-community.github.io/home-manager/">manual</a> and an
+<a href="https://mipmip.github.io/home-manager-option-search/">option search</a>.
+Most important data are:</p>
+<ul>
+<li><code>home.username</code></li>
+<li><code>home.homeDirectory</code></li>
+<li><code>stateVersion</code></li>
+<li><code>xdg.*</code>: to manage XDG directories</li>
+<li><code>wayland.windowManager.*</code>: to manage either hyprland or sway</li>
+<li><code>services.*</code>: to manage some services</li>
+<li><code>programs.*</code>: to install and configure some programs</li>
+</ul>
+<h3>References</h3>
+<ul>
+<li><a href="https://linuxfr.org/users/nokomprendo-3/journaux/gerer-son-environnement-utilisateur-nixos-avec-home-manager">journal Linuxfr NixOS/Home-manager</a></li>
+<li><a href="https://gitlab.com/nokomprendo/nixos-20.09_config">Simple NixOS/Home-manager Configuration</a></li>
+<li><a href="https://mynixos.com/home-manager/options">Home Manager Options</a></li>
+<li><a href="https://github.com/behoof4mind/nix-home-manager-example">Home Manager Example</a></li>
+</ul>

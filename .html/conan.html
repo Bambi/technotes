@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<title>conan</title>
+<link rel="stylesheet" href="file:///home/as/.config/rucola/default_dark.css">
+<h1>Conan</h1>
+<p>Package manager for C/C++ libraries. Packages are preferably binary but can also be source code.</p>
+<h2>Configuration</h2>
+<p><code>~/.conan/remotes.json</code>
+List servers where to find packages. The conan-center is automatically added.
+This file can be manually edited or servers can be added with:
+<code>conan remote add &lt;remote name&gt; &lt;remote url&gt;</code></p>
+<p><code>~/.conan/profiles/ default</code>
+Set of different settings, options, environment variables and build requirements
+used when working with packages. The settings define the operating system,
+architecture, compiler, build type, and C++ standard.
+Options define, among other things, if dependencies are linked in shared or static mode or other compile options.</p>
+<p><code>~/.conan/settings.yml</code>
+A set of keys and values, like os, compiler and build_type that can be used
+in profile files depending on platform.</p>
+<h2>Using</h2>
+<p>To list packages available on a remote:
+<code>conan search &lt;pkg name&gt; --remote=&lt;remote name&gt;</code>
+To list available packages locally:
+<code>conan search &lt;pkg name&gt;</code></p>
+<p>Package names are in the form <code>&lt;name&gt;/&lt;version&gt;</code>. These are official conan center packages.
+Others are in the form <code>&lt;name&gt;/&lt;version&gt;@&lt;user&gt;/&lt;channel&gt;</code>.</p>
+<p>To get information about a specific package:
+<code>conan inspect &lt;full pkg name&gt; --remote=&lt;remote name&gt;</code></p>
+<h2>Installing Packages</h2>
+<p>In a project packages dependencies are listed in the <code>conanfile.txt</code> file.
+To install required packages and dependencies:
+<code>conan install &lt;dir path where to find conanfile.txt&gt;</code>
+To install and build a source package:
+<code>conan install &lt;dir path&gt; --build &lt;pkg name&gt;|missing</code></p>
+<p>Packages will be installed in the <code>~/.conan/data directory</code>.
+A <code>conaninfo.txt</code> file will be created in which the settings, requirements and
+optional information is saved together with a <code>conanbuildinfo.xxx</code> file
+containing instructions to be used by your build system.</p>
+<p>The format and extension depends on the package and the conanfile (generators section ; can be <code>cmake</code> or <code>text</code>).
+Setting required for the install is taken from the <code>~/.conan/settings/default</code> file.
+They can be overridden with command line options <code>-s / --settings</code>:
+<code>conan install .. --settings os=&quot;Linux&quot; --settings compiler=&quot;gcc&quot;</code></p>
+<h2>Alternatives</h2>
+<p><a href="https://interrupt.memfault.com/blog/conda-developer-environments">Managing Developer Environments with Conda</a>.</p>

@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<title>kvm</title>
+<link rel="stylesheet" href="file:///home/as/.config/rucola/default_dark.css">
+<h1>KVM</h1>
+<h2>Virsh Commands</h2>
+<ul>
+<li><code>virsh list [--all]</code>: list running (and inactives) VM</li>
+<li><code>virsh shutdown [--force] &lt;VM&gt;</code>: restart a VM</li>
+<li><code>virsh start &lt;VM&gt;</code>: start a VM</li>
+<li><code>virsh destroy [--graceful] &lt;VM&gt;</code>: force a VM to stop</li>
+<li><code>virsh snapshot-create-as --domain &lt;VM&gt; --name &lt;name&gt;</code>: create a snapshot from a stopped VM</li>
+<li><code>virsh snapshot-revert --domain &lt;VM&gt; --snapshotname &lt;name&gt;</code>: revert a VM from a snapshot</li>
+<li><code>virsh console --force &lt;VM&gt;</code>: console into the VM</li>
+<li><code>virsh send-key &lt;VM&gt; KEY_LEFTALT KEY_SYSRQ KEY_B</code>: send sysrq key sequence (reboot system)</li>
+</ul>

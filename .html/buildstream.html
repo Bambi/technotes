@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<title>buildstream</title>
+<link rel="stylesheet" href="file:///home/as/.config/rucola/default_dark.css">
+<h1>Buildstream</h1>
+<p>Integration tool based on yaml build metadata description files.
+Builds are done in sandboxed environment so no host tooling are used.
+Buildstream have very few dependencies to run:</p>
+<ul>
+<li><code>python3</code> (preferably installed with pip)</li>
+<li><code>bubblewrap</code></li>
+<li><code>lzip</code></li>
+</ul>
+<h2>Usage</h2>
+<p>Build a pipeline of elements. An element is composed of actions that are processed
+in a bubblewrap (chroot).
+An element have a number of input which can be either or both:</p>
+<ul>
+<li>runtime dependency</li>
+<li>build dependency</li>
+</ul>
+<p>Theses input can come from:</p>
+<ul>
+<li>local files, tarballs, git checkout...</li>
+<li>output of previous elements</li>
+</ul>
+<p>and produce outputs:</p>
+<ul>
+<li>outputs in <code>install-root (/buildstream-install)</code> are the effective output of
+the element and are listed with the command <code>bst artifact list-contents</code></li>
+<li>other outputs are discarded after execution of the element</li>
+<li>outputs can be sorted into <code>domain names</code> with <code>split rules</code>.
+(for example a part of the output artifact can be considered as <code>runtime</code>
+while the other can be considered as <code>devel</code> artifact).
+Split rules are defined in the project's configuration (<code>project.conf</code>),
+see <a href="https://docs.buildstream.build/2.1/format_project.html#project-builtin-defaults">default configuration</a>.</li>
+<li>outputs can also be further filtered with the <code>filter</code> element.</li>
+</ul>
+<h2>Elements</h2>
+<p>Each element has a type specified with the <code>kind</code> standza.</p>
+<ul>
+<li><code>stack</code>: symbolic element for dependency grouping. Has only depends standza
+and all dependencies are always both build and runtime dependencies.</li>
+<li><code>import</code>: produce artifacts directly from its sources without any processing.
+Sources are specified with the <code>source</code> standza and output with the <code>target</code>
+standza.</li>
+<li><code>compose</code>: creates a selective composition of its dependencies. Dependencies
+can only be <code>build</code> type.</li>
+<li><code>script</code>: run some commands to mutate the inputs and create outputs.</li>
+<li><code>link</code>: link 2 elements together.</li>
+<li><code>filter</code>: extract a subsets of files from an other element.</li>
+<li><code>junction</code>: integrate subprojects. With a junction element, local elements can
+depends on other project elements using <code>element paths</code>.
+It is not possible to depend from a junction nor a junction can have dependencies.</li>
+</ul>
+<h2>References</h2>
+<ul>
+<li><a href="https://gitlab.com/celduin/buildstream-bazel">Buildstream Bazel</a></li>
+<li><a href="https://docs.google.com/presentation/d/1OdZcVb_jfjYsvSOwCf5ydQCEK5m6E7kGbnFX9XZ8ocs/edit#slide=id.p">Buildstream Tutorial 101</a></li>
+<li><a href="https://docs.google.com/presentation/d/1tNOqk5E0IhCKciGcaA8zqwpjPlgWGEQqnwQvR1tLaaQ/edit?pli=1#slide=id.p">Buildstream Tutorial 102</a></li>
+</ul>

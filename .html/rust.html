@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<title>rust</title>
+<link rel="stylesheet" href="file:///home/as/.config/rucola/default_dark.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/go.min.js"></script>
+<script>hljs.highlightAll();</script>
+<h1>Rust</h1>
+<h2>Basics</h2>
+<p>Function call with a <code>!</code> are macro call:</p>
+<pre><code class="language-rust">fn main() {
+    println!(&quot;Hello, World!&quot;);
+}
+</code></pre>
+<p><code>let</code> declares a unmuttable variable (like Nim). Use <code>let mut</code> to declare a
+muttable variable (like <code>var</code> in Nim).
+Variable declaration use the same syntax as Zig and Nim: <code>let bigint: i64 = 0;</code>.</p>
+<p>The <code>()</code> is the empty type (like <code>void</code>).</p>
+<p>There is no implicit type conversion, you must use a <code>cast</code>:</p>
+<pre><code class="language-rust">fn main() {
+    let mut sum = 0.0;
+    for i in 0..5 {
+        sum += i as f64;
+    }
+    println!(&quot;sum is {}&quot;, sum);
+}
+</code></pre>
+<p>Loops ranges are not inclusive: the previous loop goes from 0 to 4.</p>
+<p>Storage of Rust values is up to the types being used and how they are implemented.
+Local variables live on the stack. Anything inside a <code>Box</code>, <code>Vec</code>, <code>Rc</code>, or <code>Arc</code>
+will be put on the heap, but the actual Box struct itself (i.e. the pointer)
+will live on the stack.</p>
+<h3>Default Values</h3>
+<p>Rust compiler will emit an error if you use an un-initialized variable. Theses
+are just sensible default values.</p>
+<p>| Type           | Default Value
+|----------------|----------------
+| <code>bool</code>         | <code>false</code>
+| <code>char</code>         | <code>'\0'</code>
+| <code>Option</code>	     | <code>None</code>
+| <code>String, &amp;str</code> | <code>&quot;&quot;</code>
+| <code>Vec&lt;usize&gt;</code>	 | <code>[]</code>
+| <code>[usize; N]</code>   | <code>[0, 0, …, 0]</code>
+| <code>&amp;[u32]</code>       | <code>[]</code>
+| <code>f64, f32…</code>    | <code>0.</code>
+| <code>usize, u32…</code>  | <code>0</code></p>
+<h3>Functions</h3>
+<p>There is type inference in Rust but function types must be explicit.
+The return value of a function is either giver by the <code>return</code> statement or by the last statement:</p>
+<pre><code class="language-rust">fn sqr(x: f64) -&gt; f64 {
+    x * x
+}
+</code></pre>
+<p>Parameters may be passed by reference (<code>&amp;</code> and <code>*</code>):</p>
+<pre><code class="language-rust">fn by_ref(x: &amp;i32) -&gt; i32{
+    *x + 1
+}
+let i = 10;
+let res1 = by_ref(&amp;i);
+let res2 = by_ref(&amp;41);
+</code></pre>
+<p>Use <code>&amp;mut</code> to pass a reference that can be modified.</p>
+<h3>Arrays &amp; Slices</h3>
+<p>Arrays are immutable and their size is fixed and knowed at comptime. The type of an array includes its size.</p>
+<pre><code class="language-rust">fn sum(values: &amp;[i32]) -&gt; i32 {
+    let mut res = 0;
+    for i in 0..values.len() {
+        res += values[i]
+    }
+    res
+}
+
+fn main() {
+    let arr = [10,20,30,40];
+    // look at that &amp;
+    let res = sum(&amp;arr);
+    println!(&quot;sum {}&quot;, res);
+}
+</code></pre>
+<p>A C programmer pronounces <code>&amp;</code> as 'address of' ; a Rust programmer pronounces it
+'borrow'. This is going to be the key word when learning Rust. Borrowing
+is the name given to a common pattern in programming; whenever you pass
+something by reference (as nearly always happens in dynamic languages)
+or pass a pointer in C. Anything borrowed remains owned by the original owner.</p>
+<p>Use <code>{:?}</code> to print an array:</p>
+<pre><code class="language-rust">let ints = [1, 2, 3];
+println!(&quot;ints {:?}&quot;, ints);
+</code></pre>
+<p>Slices give you different views of the same array:</p>
+<pre><code class="language-rust">fn main() {
+    let ints = [1, 2, 3, 4, 5];
+    let slice1 = &amp;ints[0..2];
+    let slice2 = &amp;ints[1..];  // open range!
+
+    println!(&quot;ints {:?}&quot;, ints);
+    println!(&quot;slice1 {:?}&quot;, slice1);
+    println!(&quot;slice2 {:?}&quot;, slice2);
+}
+</code></pre>
+<h3>Optionnal Value</h3>
+<p>The size of a slice is knowed at runtime and getting a slice element out of its bounds
+will panic. The <code>get</code> method does not panic:</p>
+<pre><code class="language-rust">fn main() {
+    let ints = [1, 2, 3, 4, 5];
+    let slice = &amp;ints;
+    let first = slice.get(0);
+    let last = slice.get(5);
+
+    println!(&quot;first {:?}&quot;, first);
+    println!(&quot;last {:?}&quot;, last);
+}
+// first Some(1)
+// last None
+</code></pre>
+<p><code>last</code> failed but returned something called <code>None</code>. <code>first</code> is fine, but
+appears as a value wrapped in <code>Some</code>. Welcome to the <code>Option</code> type! It may
+be either <code>Some</code> or <code>None</code>:</p>
+<pre><code class="language-rust">pub enum Option&lt;T&gt; {
+    None,
+    Some(T),
+}
+</code></pre>
+<p>The Option type has some useful methods: <code>is_some()</code>, <code>is_none()</code>, <code>unwrap()</code>.</p>
+<h3>Vectors</h3>
+<p>These are re-sizeable arrays and behave much like Python <code>List</code>:</p>
+<pre><code class="language-rust">let mut v = Vec::new();
+v.push(10);
+v.push(20);
+v.push(30);
+
+let first = v[0];  // will panic if out-of-range
+let maybe_first = v.get(0);
+</code></pre>
+<p>Vectors must be <code>mut</code>. Use <code>vec!</code> macro to initialize a vector:</p>
+<pre><code class="language-rust">let mut v1 = vec![10, 20, 30];
+v1.pop();
+
+let mut v2 = Vec::new();
+v2.push(10);
+v2.push(20);
+
+assert_eq!(v1, v2);
+
+v2.extend(0..2);
+assert_eq!(v2, &amp;[10, 20, 0, 1]);
+</code></pre>
+<h3>Iterators</h3>
+<p>It is an 'object' with a <code>next</code> method which returns an <code>Option</code>. As long
+as that value is not <code>None</code>, we keep calling next:</p>
+<pre><code class="language-rust">let mut iter = 0..2;
+assert_eq!(iter.next(), Some(1));
+assert_eq!(iter.next(), Some(2));
+assert_eq!(iter.next(), None);
+</code></pre>
+<p>They are often used with <code>for</code> loops: <code>for i in arr.iter()</code>.</p>
+<h3>Strings</h3>
+<p>The <code>String</code> type, like <code>Vec</code>, allocates dynamically and is resizeable.
+But string litterals are not <code>Strings</code>, they are <code>&amp;str</code> (string slice):</p>
+<pre><code class="language-rust">fn dump(s: &amp;str) {
+    println!(&quot;str '{}'&quot;, s);
+}
+
+fn main() {
+    let text = &quot;hello dolly&quot;;  // the string slice
+    let s = text.to_string();  // it's now an allocated string
+
+    dump(text);
+    dump(&amp;s);
+}
+</code></pre>
+<p>Under the hood, String is basically a <code>Vec&lt;u8&gt;</code> and <code>&amp;str</code> is <code>&amp;[u8]</code>.
+Like a vector, you can <code>push</code> a character and <code>pop</code> one off the end of <code>String</code>.</p>
+<p>The <code>format!</code> macro is a very useful way to build up more complicated strings using the same format strings as <code>println!</code>:</p>
+<pre><code class="language-rust">fn array_to_str(arr: &amp;[i32]) -&gt; String {
+    let mut res = '['.to_string();
+    for v in arr {
+        res += &amp;v.to_string();
+        res.push(',');
+    }
+    res.pop();
+    res.push(']');
+    res
+}
+
+fn main() {
+    let arr = array_to_str(&amp;[10, 20, 30]);
+    let res = format!(&quot;hello {}&quot;, arr);
+
+    assert_eq!(res, &quot;hello [10,20,30]&quot;);
+}
+</code></pre>
+<h3>Matching</h3>
+<p><code>match</code> can operate like a C <code>switch</code> statement, and like other Rust constructs can return a value:</p>
+<pre><code class="language-rust">let text = match n {
+    0 =&gt; &quot;zero&quot;,
+    1 =&gt; &quot;one&quot;,
+    2 =&gt; &quot;two&quot;,
+    _ =&gt; &quot;many&quot;,
+};
+</code></pre>
+<p>The <code>_</code> is like C <code>default</code> - it's a fall-back case. If you don't provide one
+(or treat all possible values) then rustc will consider it an error.</p>
+<p>Rust <code>match</code> statements can also match on ranges. Note that these ranges
+have <em>three</em> dots and are inclusive ranges, so that the first condition
+would match 3:</p>
+<pre><code class="language-rust">let text = match n {
+    0...3 =&gt; &quot;small&quot;,
+    4...6 =&gt; &quot;medium&quot;,
+    _ =&gt; &quot;large&quot;,
+ };
+</code></pre>
+<h3>Result Types</h3>
+<p>An <code>Result</code> is a value that contain something or an error (like an <code>Option</code>). It is
+often used as a return values for functions.
+A <code>Result</code> is defined by 2 type parameters, for the <code>Ok</code> and the <code>Err</code> values. A <code>Result</code>
+has 2 compartments, one labelled <code>Ok</code> and the other <code>Err</code>:</p>
+<pre><code class="language-rust">fn good_or_bad(good: bool) -&gt; Result&lt;i32,String&gt; {
+    if good {
+        Ok(42)
+    } else {
+        Err(&quot;bad&quot;.to_string())
+    }
+}
+
+fn main() {
+    println!(&quot;{:?}&quot;,good_or_bad(true));
+    //Ok(42)
+    println!(&quot;{:?}&quot;,good_or_bad(false));
+    //Err(&quot;bad&quot;)
+
+    match good_or_bad(true) {
+        Ok(n) =&gt; println!(&quot;Cool, I got {}&quot;,n),
+        Err(e) =&gt; println!(&quot;Huh, I just got {}&quot;,e)
+    }
+    // Cool, I got 42
+}
+</code></pre>
+<p>A typical usage would be:</p>
+<pre><code class="language-rust">fn read_to_string(filename: &amp;str) -&gt; Result&lt;String,io::Error&gt; {
+    let mut file = match File::open(&amp;filename) {
+        Ok(f) =&gt; f,
+        Err(e) =&gt; return Err(e),
+    };
+    let mut text = String::new();
+    match file.read_to_string(&amp;mut text) {
+        Ok(_) =&gt; Ok(text),
+        Err(e) =&gt; Err(e),
+    }
+}
+</code></pre>
+<p>The <code>?</code> operator does almost exactly what the match on <code>File::open</code> does; if
+the result was an error, then it will immediately return that error. Otherwise,
+it returns the <code>Ok</code> result:</p>
+<pre><code class="language-rust">fn read_to_string(filename: &amp;str) -&gt; io::Result&lt;String&gt; {
+    let mut file = File::open(&amp;filename)?;
+    let mut text = String::new();
+    file.read_to_string(&amp;mut text)?;
+    Ok(text)
+}
+</code></pre>
+<h3>Tuples</h3>
+<p>Tuples are a convenient to return multiple values from a function:</p>
+<pre><code class="language-rust">fn add_mul(x: f64, y: f64) -&gt; (f64,f64) {
+    (x + y, x * y)
+}
+
+fn main() {
+    let t = add_mul(2.0,10.0);
+
+    // can debug print
+    println!(&quot;t {:?}&quot;, t);
+    // can 'index' the values
+    println!(&quot;add {} mul {}&quot;, t.0,t.1);
+    // can _extract_ values
+    let (add,mul) = t;
+    println!(&quot;add {} mul {}&quot;, add,mul);
+}
+</code></pre>
+<p>Tuples can contain different types.
+<code>enumerate</code> is like the Python generator of the same name:</p>
+<pre><code class="language-rust">for t in [&quot;zero&quot;,&quot;one&quot;,&quot;two&quot;].iter().enumerate() {
+    print!(&quot; {} {};&quot;,t.0,t.1);
+}
+//  0 zero; 1 one; 2 two;
+</code></pre>
+<p><code>zip</code> combines two iterators into a single iterator of tuples containing
+the values from both:</p>
+<pre><code class="language-rust">let names = [&quot;ten&quot;,&quot;hundred&quot;,&quot;thousand&quot;];
+let nums = [10,100,1000];
+for p in names.iter().zip(nums.iter()) {
+    print!(&quot; {} {};&quot;, p.0,p.1);
+}
+//  ten 10; hundred 100; thousand 1000;
+</code></pre>
+<h3>Structs</h3>
+<p>A struct contain named fields:</p>
+<pre><code class="language-rust">struct Person {
+    first_name: String,
+    last_name: String
+}
+
+fn main() {
+    let p = Person {
+        first_name: &quot;John&quot;.to_string(),
+        last_name: &quot;Smith&quot;.to_string()
+    };
+    println!(&quot;person {} {}&quot;, p.first_name,p.last_name);
+}
+</code></pre>
+<p>A function can be made into an <em>associated function</em> of a struct by putting it
+into an <code>impl</code> block:</p>
+<pre><code class="language-rust">impl Person {
+
+    fn new(first: &amp;str, name: &amp;str) -&gt; Person {
+        Person {
+            first_name: first.to_string(),
+            last_name: name.to_string()
+        }
+    }
+    fn full_name(&amp;self) -&gt; String {
+        format!(&quot;{} {}&quot;, self.first_name, self.last_name)
+    }
+}
+let p = Person::new(&quot;John&quot;,&quot;Smith&quot;);
+println!(&quot;fullname {}&quot;, p.full_name());
+</code></pre>
+<p>The keyword <code>Self</code> refers to the struct type:</p>
+<ul>
+<li>no <code>self</code> argument: you can associate functions with structs, like the
+<code>new</code> &quot;constructor&quot;.</li>
+<li><code>&amp;self</code> argument: can use the values of the struct, but not change them</li>
+<li><code>&amp;mut self</code> argument: can modify the values</li>
+<li><code>self</code> argument: will consume the value, which will move.</li>
+</ul>
+<p>The <code>#[derive(Debug)]</code> <em>directive</em> makes the compiler generate a Debug
+implementation, which is very helpful to display a struct with <code>println!</code>
+or <code>format!</code>.</p>
+<h2>Ownership &amp; Borrowing</h2>
+<p>Theses concepts are used to ensure that no memory is deallocated before its
+last use. If you try to do that you will have a compile error instead of a
+runtime error.
+In Rust when you pass a variable to a function, the function takes ownership
+of the memory for that variable:</p>
+<pre><code class="language-rust">#[derive(Debug)]  // that macro generates an implementation of the Debug Trait
+struct SomeStruct {
+    num: i32,
+}
+
+fn print_struct(the_struct: SomeStruct) {
+    println!(&quot;{:?}&quot;, the_struct); // &quot;{:?}&quot;: use the implementation of Debug 
+}
+
+fn main() {
+    let my_struct = SomeStruct { num:2 };
+    print_struct(my_struct);
+    print_struct(my_struct); // Error!
+}
+</code></pre>
+<p>Outside of workarounds like <code>Rc</code>, a value cannot be owned by more than one variable.
+In the previous example <code>my_struct</code> have been moved to the <code>the_struct</code> argument
+variable on the first call to <code>print_struct</code>. After this the <code>my_struct</code> variable
+does not exist anymore (the variable lost its ownership on the data), hence
+the error on the second call to <code>print_struct</code>.</p>
+<p>There are 3 ways to work arround this problem:</p>
+<ul>
+<li>clone the data: Add the <code>Clone</code> trait to your struct and call <code>clone()</code> on
+your first function call: <code>print_struct(my_struct.clone())</code>. This will pass
+a copy of the struct, which may pose a performance problem.</li>
+<li>copy the data: Add the <code>Copy</code> trait to your struct (the <code>Copy</code> trait requires
+that a <code>Clone</code> trait has been implemented). The copy trait makes a full copy
+of your data, just like the clone trait, but this time its usage is implicit:
+with each call of <code>print_struct</code> a copy of the struct is done automatically.</li>
+<li>pass a <em>read only reference</em> to the function. It is a way of handing off a
+variable without handing off its ownership. You can create as many read-only
+references of a variable as you want. Modify the function signature to
+<code>fn print_struct(the_struct: &amp;SomeStruct)</code> and call it with
+<code>print_struct(&amp;my_struct);</code>.</li>
+</ul>
+<p>Rust has also the concept of <em>mutable reference</em> to allow a function to modify
+its parameter but contrary to <em>read only references</em> you can only have one
+mutable reference at time:</p>
+<pre><code class="language-rust">fn mutate_struct(the_struct: &amp;mut SomeStruct) {
+    the_struct.num = 5
+}
+let mut my_struct = SomeStruct { num:1 };
+mutate_struct(&amp;mut my_struct);
+</code></pre>
+<h2>Lifetimes</h2>
+<p>Lifetimes are what the Rust compiler uses to keep track of how long references are valid for.
+Lifetime annotations enable you to tell the borrow checker (which takes care
+of allocating and freeing memory) how long references are valid for.
+In many cases, the borrow checker can infer the correct lifetimes but sometimes
+it needs your help to figure it out.</p>
+<p>Lifetimes are annotated by a leading apostrophe followed by a variable name,
+we often use single, lowercase letters, starting from <code>'a</code>, <code>'b</code>.</p>
+<p>The following example:</p>
+<pre><code class="language-rust">let x;
+{                           // create new scope
+    let y = 42;
+    x = &amp;y;
+}                           // y is dropped
+println!(&quot;The value of 'x' is {}.&quot;, x);
+</code></pre>
+<p>will not compile with the error <code>error[E0597]: 'x' does not live long enough</code>
+because the inner scope (lifetime) ends and values with that lifetime are
+invalidated.</p>
+<p>When writing functions that accept references as arguments, the compiler can
+infer the correct lifetimes in many cases. When lifetime annotations are implicit,
+we call this <em>lifetime elision</em>.</p>
+<p>Lifetime annotations in functions can be elide if one of the following is true:</p>
+<ul>
+<li>The function doesn’t return a reference</li>
+<li>There is exactly one reference input parameter</li>
+<li>The function is a method, taking <code>&amp;self</code> or <code>&amp;mut self</code> as the first parameter</li>
+</ul>
+<p>You can’t return a reference from a function without also passing in a reference
+(execpt with the <code>'static</code> lifetime).
+If your function takes exactly one reference parameter, then you’ll be fine
+without annotations:</p>
+<pre><code class="language-rust">fn f(s: &amp;str) -&gt; &amp;str {
+    s
+}
+</code></pre>
+<p>But if you add another input parameter:</p>
+<pre><code class="language-rust">fn f&lt;'a, 'b&gt;(s: &amp;'a str, t: &amp;'b str) -&gt; &amp;'??? str {
+    if s.len() &gt; 5 { s } else { t }
+}
+</code></pre>
+<p>the compiler do not know what will be the lifetime of the return value.
+One way to correct this is to give both input parameters the same lifetime
+annotation:</p>
+<pre><code class="language-rust">fn f&lt;'a&gt;(s: &amp;'a str, t: &amp;'a str) -&gt; &amp;'a str {
+    if s.len() &gt; 5 { s } else { t }
+}
+</code></pre>
+<p>An other way if you know exactly which parameter you're returning is to annotate
+that specific lifetime:</p>
+<pre><code class="language-rust">fn f&lt;'a, 'b&gt;(s: &amp;'a str, _t: &amp;'b str) -&gt; &amp;'a str {
+    s
+}
+</code></pre>
+<p>In summary, lifetimes:</p>
+<ul>
+<li>are only relevant for references</li>
+<li>do not change the lifetime of the parameters</li>
+<li>sometimes they can be inferred</li>
+</ul>
+<p>See <a href="https://blog.logrocket.com/understanding-lifetimes-in-rust/">here</a>
+for details, especially for references in structures.</p>
+<h2>Modules &amp; Cargo</h2>
+<h3>Modules</h3>
+<p>A module is a namespace. In a module all exported symbols must be marked <code>pub</code>:</p>
+<pre><code class="language-rust">mod foo {
+    #[derive(Debug)]
+    pub struct Foo {
+        s: &amp;'static str
+    }
+
+    impl Foo {
+        pub fn new(s: &amp;'static str) -&gt; Foo {
+            Foo{s: s}
+        }
+    }
+}
+
+fn main() {
+    let f = foo::Foo::new(&quot;hello&quot;);
+    println!(&quot;{:?}&quot;, f);
+}
+</code></pre>
+<p>Within a module, all items are visible to all other items.</p>
+<p>It is usual to put modules in separate files. In the previous example you can put
+the content of the <code>foo</code> module in a file <code>foo.rs</code> (without the <code>mod foo</code> block)
+and use <code>mod foo;</code> at the beginning of the main file. When compiling the main file
+with <code>rustc main.rs</code> will also compile <code>foo.rs</code>.
+The compiler will also look at <code>&lt;mod name&gt;/mod.rs</code> for the module file.</p>
+<h3>Crates</h3>
+<p>It is the compilation unit for rust: it is either an executable or a library.
+To create a static library:</p>
+<pre><code>src$ rustc foo.rs --crate-type=lib
+src$ ls -l libfoo.rlib
+-rw-rw-r-- 1 steve steve 7888 Jan  5 13:35 libfoo.rlib
+</code></pre>
+<p>We can now link this into our main program:</p>
+<pre><code>src$ rustc main.rs --extern foo=libfoo.rlib
+</code></pre>
+<p>The main program use the library with the <code>extern crate</code> statement which include
+an implicit <code>mod</code> statement:</p>
+<pre><code class="language-rust">extern crate foo;
+
+fn main() {
+    let f = foo::Foo::new(&quot;hello&quot;);
+    println!(&quot;{:?}&quot;, f);
+}
+</code></pre>
+<h3>Cargo</h3>
+<p>Dependency tool for Rust: can download sources for modules for a specific version
+and all required dependencies. Main commands are:</p>
+<ul>
+<li><code>cargo init</code>: initialize a new project</li>
+<li><code>cargo build</code>: build a project</li>
+<li><code>cargo run</code>: launch a project</li>
+</ul>
+<h1>Tips &amp; Trics</h1>
+<h2>Generic IO (File / stdin-out)</h2>
+<p>Stdin-out and File are @ different types in Rust (Stdin or Stdout and File).
+3 solutions for this problem:</p>
+<ul>
+<li>use libc::File</li>
+<li>use a <code>Box</code> type (soft polymorphic reference)</li>
+<li>use a <a href="https://stackoverflow.com/questions/36088116/how-to-do-polymorphic-io-from-either-a-file-or-stdin-in-rust?rq=3">generic function</a></li>
+</ul>
+<h1>References</h1>
+<ul>
+<li><a href="https://play.rust-lang.org/">Rust Playground</a></li>
+<li><a href="https://stevedonovan.github.io/rust-gentle-intro/">A Gentle Introduction To Rust</a></li>
+<li><a href="https://rust-cli.github.io/book/index.html">Command Line Applications in Rust</a></li>
+<li><a href="https://doc.rust-lang.org/rust-by-example/">Rust By Example</a></li>
+<li><a href="https://doc.rust-lang.org/stable/std/index.html">Rust Documentation: Crate std</a></li>
+<li><a href="https://serde.rs/">Serde Documentation</a></li>
+<li><a href="https://www.linuxjournal.com/content/getting-started-rust-working-files-and-doing-file-io">Working with Files and Doing File I/O</a></li>
+<li><a href="https://www.sitepoint.com/rust-global-variables/">Global Variables in Rust</a></li>
+<li><a href="https://opensource.com/article/20/3/rust-cargo">Getting started with the Rust package manager, Cargo</a></li>
+<li><a href="https://www.reddit.com/r/rust/comments/3gtpy9/wrapping_around_generic_io/">Wrapping around generic IO?</a></li>
+<li><a href="https://piware.de/post/2021-08-27-rust-and-c/">Learning Rust: Interfacing with C</a></li>
+<li><a href="https://riptutorial.com/rust">Rust by Example</a></li>
+<li><a href="https://medium.com/dwelo-r-d/using-c-libraries-in-rust-13961948c72a">Using C Libraries in Rust</a></li>
+<li><a href="https://github.com/bots-garden/apprendre-rust-en-30-mins?tab=readme-ov-file#apprendre-rust-en-30-mins">Apprendre Rust en 30 mins</a></li>
+</ul>

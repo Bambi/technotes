@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<title>lua</title>
+<link rel="stylesheet" href="file:///home/as/.config/rucola/default_dark.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/go.min.js"></script>
+<script>hljs.highlightAll();</script>
+<h1>Lua</h1>
+<h2>Language Basics</h2>
+<p>Comments begins with <code>-- </code>. Constant are named in CAPITAL. Ignored variable names generally
+start with <code>_</code>. A statement can optionally end with a <code>;</code>.</p>
+<h3>Types</h3>
+<ul>
+<li><code>nil</code>: different from every other value.</li>
+<li><code>boolean</code>: can be <code>true</code> or <code>false</code>. <code>nil</code> and <code>false</code> are false, all other value are true.</li>
+<li><code>number</code>: real floating-point number.</li>
+<li><code>string</code>: table of characters.</li>
+<li><code>function</code>: Callable Lua or C code.</li>
+<li><code>userdata</code>: a block of memory to store arbitrary C data.</li>
+<li><code>thread</code>: thread of execution for coroutines.</li>
+<li><code>table</code>: associative tables. Index can be any value except nil.
+Value are heterogeneous except for the value nil. <code>table[&quot;key&quot;]</code> and <code>table.key</code> are the same.
+Table are created with <code>{}</code>.</li>
+</ul>
+<h3>Variables</h3>
+<p>Variables can be global or local. Local variables are declared with the keyword <code>local</code>.
+All non local variables are considered global and not need to be declared.</p>
+<p>Variables only hold references to values. The function <code>type(val)</code> return a string
+describing the type of a value.</p>
+<h3>Length Operator</h3>
+<p>Unary <code>#</code> operator. For a string return the number of bytes. For a table gives the number of keys.</p>
+<h3>Concatenation</h3>
+<p>String concatenation is done with <code>..</code> (ex: <code>str1..str2</code>).
+Numbers are automatically converted to strings.</p>
+<h3>Tables</h3>
+<p>Tables can be used as array:</p>
+<pre><code class="language-lua">t = {5, 1, 10}
+print(t[1])
+&gt; 5
+print(t[2])
+&gt; 1
+print(#t)
+&gt; 3
+</code></pre>
+<p>First index is always 1. <code>t[0]</code> is always <code>nil</code>. You can add an element at the end
+of a table with <code>table.insert(tbl, val)</code>: it will use the last index + 1.</p>
+<p>Indexes may not be in order. In this case the table is no longer an array
+and the length operator result is undefined.</p>
+<p>Tables can also be used as dictionaries:</p>
+<pre><code class="language-lua">t = { apple=&quot;green&quot;, orange=&quot;orange&quot;, banana=&quot;yellow&quot; }
+</code></pre>
+<p>The key can be any type but if the key is a string then theses 2 syntax are identical:</p>
+<pre><code class="language-lua">tbl[&quot;key&quot;] = val
+tbl.key = val
+</code></pre>
+<p>It is possible to mix an array and a dictionary in the same table:</p>
+<pre><code class="language-lua">t = {2,4, language=&quot;Lua&quot;, version=&quot;5&quot;}
+for k,v in pairs(t) do print(k,v) end
+&gt; 1	2
+&gt; 2	4
+&gt; version	5
+&gt; language	Lua
+</code></pre>
+<p>Remark: array table are in fact dictionary table with a sequenced number as the key
+plus a <code>n</code> key with the number of elements.
+The function <code>table.pack()</code> create an array with a list of values:</p>
+<pre><code class="language-lua">t=table.pack(1, 5, 2)
+for k,v in pairs(t) do print(k,v) end
+&gt; 1	1
+&gt; 2	5
+&gt; 3	2
+&gt; n	3
+</code></pre>
+<h3>MetaTables</h3>
+<p>A meta table is a dictionary with specific values for key and functions (metamethods) for values.
+A meta table can be associated with a table with the function <code>setmetatable(tbl, metatbl)</code>.
+This will allow to define specific operations on tables, for example the <code>add</code> operation:</p>
+<pre><code class="language-lua">t1 = {25}
+t2 = {18}
+mt = {}    -- metatable.
+-- Add operation.
+mt.__add = function(a, b)
+  return{valeur = a[1] + b[1]}
+end
+setmetatable(t1, mt)    -- Associate mt with t1
+print(unpack(t1 + t2))
+---&gt; 43
+</code></pre>
+<h3>Functions</h3>
+<p>Functions are declared with:</p>
+<pre><code class="language-lua">function my_function(arg1, arg2, ...)
+	-- body of the function
+end
+</code></pre>
+<p>and called with: <code>my_function(p1, p2, p3, p4)</code>. <code>...</code> express a variable number of arguments.</p>
+<p>Function parameters are local variables.
+A function can be assigned to a variable or returned by another function.
+A function can return multiple values (with the <code>return</code> keyword).</p>
+<p>The unpack function takes a table and return all its elements as a list.
+t can be used to call a function with its parameters stored in a table:</p>
+<pre><code class="language-lua">fct(unpack(m_table))
+</code></pre>
+<h3>Environment Table</h3>
+<p>All global variables are stored in a special table called <code>_G</code>.
+Global variables can thus be accessed with <code>val = _G[&quot;varname&quot;]</code>.
+A metatable can be associated with the global table so it is possible for example
+to modify the default behavior that it is not necessary to declare a global variable.</p>
+<h3>Modules</h3>
+<p>Module is like a library that can be loaded using <code>require</code> and has a single global
+name containing a table:</p>
+<pre><code class="language-lua">local mymath =  {}
+function mymath.add(a,b)
+   print(a+b)
+end
+return mymath
+</code></pre>
+<p>And used with:</p>
+<pre><code class="language-lua">mymathmodule = require(&quot;mymath&quot;)
+mymathmodule.add(10,20)
+</code></pre>
+<p>The modules and the file you run should in the same directory. Module name and its file name should be the same.</p>
+<h3>Objects</h3>
+<p>Lua has no fist-class notion of objects. But OOP can be done with tables and metatables:</p>
+<pre><code class="language-lua">-- Meta class
+Rectangle = {area = 0, length = 0, breadth = 0}
+-- Derived class method new
+function Rectangle:new (o,length,breadth)
+   o = o or {}
+   setmetatable(o, self)
+   self.__index = self
+   self.length = length or 0
+   self.breadth = breadth or 0
+   self.area = length*breadth;
+   return o
+end
+-- Derived class method printArea
+function Rectangle:printArea ()
+   print(&quot;The area of Rectangle is &quot;,self.area)
+end
+-- creating an object
+r = Rectangle:new(nil,10,20)
+-- accessing properties
+print(r.length)
+-- accessing member function
+r:printArea()
+</code></pre>
+<p>Here we use the <code>:</code> syntax which is a syntactic sugar:</p>
+<pre><code class="language-lua">function t:f (params) body end -- is equal to:
+t.f = function (self, params) body end
+</code></pre>
+<h2>References</h2>
+<ul>
+<li><a href="https://www.tutorialspoint.com/lua/index.htm">Lua Tutorial</a></li>
+</ul>

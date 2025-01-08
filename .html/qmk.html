@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<title>qmk</title>
+<link rel="stylesheet" href="file:///home/as/.config/rucola/default_dark.css">
+<h1>Quantum Mechanical Keyboard</h1>
+<h1>Setup</h1>
+<ol>
+<li>clone qmk repo</li>
+<li>in the qmk repo: <code>make git-submodules</code></li>
+</ol>
+<h1>Usage</h1>
+<p>Make a new keymap for a keyboard: <code>qmk new-keymap &lt;keyboard&gt;</code>.
+<code>keyboard</code> can be:</p>
+<ul>
+<li>annepro2/c18</li>
+<li>kprepublic/bm40hsrgb</li>
+<li>kprepublic/jj50</li>
+</ul>
+<p>Compile a keyboard: <code>qmk compile -kb &lt;keyboard&gt; -km &lt;keymap&gt;</code></p>
+<p>Flash a keyboard: <code>qmk flash -kb &lt;my_keyboard&gt; -km &lt;my_keymap&gt;</code>
+Keyboard needs to be in DFU mode (bootloader mode):</p>
+<ul>
+<li>jj50: turn on while pressing last key (right-end) of the 2nd row (usualy the enter key)</li>
+</ul>
+<h1>QMK</h1>
+<p>CLI tool to ease qmk compilation. The configuration file is stored in
+<code>~/.config/qmk/qmk.ini</code> in init format.</p>
+<p>Annpro: <a href="https://github.com/troelslenda/anne-pro-firmware">User conf</a>
+https://github.com/kism/keyboard-keymaps</p>

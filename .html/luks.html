@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<title>luks</title>
+<link rel="stylesheet" href="file:///home/as/.config/rucola/default_dark.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/go.min.js"></script>
+<script>hljs.highlightAll();</script>
+<h1>Linux Unified Key Setup (LUKS)</h1>
+<ul>
+<li>allow encryption of a Linux patition</li>
+<li>replaces <code>dm-crypt</code></li>
+<li>provides a layer between a partition and the filesystem</li>
+</ul>
+<p>To make partion /dev/sda1 crypted:</p>
+<pre><code># will clear the partition and ask you a passphrase:
+cryptsetup luksFormat /dev/sda1
+
+# &lt;partname&gt; is the name of the new 'virtual' partition
+# to bind the luks partition to a decrypted partition:
+cryptsetup luksOpen /dev/sda1 &lt;partname&gt;
+
+# you can now use this partition as a normal partition:
+mkfs /dev/mapper/&lt;partname&gt;
+mount /dev/mapper/&lt;partname&gt; /mnt
+umount /dev/mapper/&lt;partname&gt; /mnt
+
+# close the luks partition:
+cryptsetup luksClose /dev/mapper/&lt;partname&gt;
+</code></pre>
+<blockquote>
+<p>[!note]
+It is possible to add other keys to a LUKS partition with the command:
+<code>cryptsetup luksAddKey /dev/sdX</code></p>
+</blockquote>
+<h2>/etc/crypttab</h2>
+<p>This file contains information about crypted filesystems. There must exist
+one line for each filesystem. Each line must have 4 fields separated by space:</p>
+<ul>
+<li>the target, the name of the mapped partition which will appear under <code>/dev/mapper</code>.</li>
+<li>the source-device, the encrypted partition (or file name). The UUID can be used.</li>
+<li>the key-file, the file with the key to decrypt the file system.
+With the value <code>none</code> the passphrase will be read on the keyboard.</li>
+<li>the crypsetup options, format is <code>key=value</code>. Use <code>tcrypt</code> for luks.</li>
+</ul>
+<p>Example:</p>
+<pre><code>partname UUID=$(cryptsetup luksUUID /dev/sda1) none tcrypt
+</code></pre>
+<h2>Grub</h2>
+<p>If the root filesystem is encrypted, the grub configuration must be updated
+with the UUID of the luks root filesysem added to the linux command line:
+Example <code>/etc/sysconfig/grub</code> file:</p>
+<pre><code>GRUB_CMDLINE_LINUX=&quot;... rd.luks.uuid=4c9b0973-407f-44e4-a91b-446014832ce6&quot;
+</code></pre>
+<p>Must be done also if the swap partition is crypted.</p>
+<h2><a href="https://github.com/latchset/clevis">Clevis</a></h2>
+<p>Clevis is a pluggable framework for automated decryption. It is able to encrypt
+data with several methods (using plugins):</p>
+<ul>
+<li>TPM2</li>
+<li>network service (tang)</li>
+<li>Shamir's secret sharing</li>
+<li>Yubikey</li>
+</ul>
+<p>The point of Clevis is that whatever plugin you use to encrypt you data, you can
+decrypt it with the command <code>clevis decrypt &lt;encrypted data&gt;</code> (the parameters
+required for the decryption is encoded in the encrypted data).</p>
+<p>Encrypting data is done with <code>clevis encrypt PIN CONFIG &lt;TEXT &gt;CIPHERTEXT.jwe</code> with:</p>
+<ul>
+<li>PIN: plugin to use: <code>tang</code>, <code>tpm2</code>, <code>sss</code>.</li>
+<li>CONFIG: parameters to add to the plugin.</li>
+</ul>
+<h3>Binding LUKS Volumes</h3>
+<p>Clevis can be used to bind a LUKS volume using a pin so that it can be automatically unlocked.
+The concept is to create a new simmetric key which is added to the LUKS partition
+as a new passphrase. This key is then encrypted with clevis (with your chosen PIN)
+and the resulting <code>.jwe</code> is stored in the LUKS header with
+<a href="http://github.com/latchset/luksmeta">LUKSMeta</a>.
+For example to bind a LUKS volume with a TPM:</p>
+<pre><code>clevis luks bind -d /dev/sdX tpm2 '{}'
+# use '{&quot;pcr_ids&quot;:&quot;1,7&quot;}' to seal the LUKS key against the UEFI settings
+</code></pre>
+<h2>Where to Store The LUKS Keys?</h2>
+<p>If the rootfs is not encrypted:</p>
+<ul>
+<li>Easy setup, no need to update grub. The luks keys can be stored in the rootfs (<code>/etc/crypttab</code> file).
+This does not offert great security as the keys are readable if you can access
+to the rootfs.</li>
+</ul>
+<p>If the rootfs is encrypted: Linux need the key in order to mount the rootfs. The
+key can be stored in:</p>
+<ul>
+<li>the initramfs. Same limitation as before.</li>
+<li>tang server. Need an online tang server and a secure network.</li>
+<li>Yubikey.</li>
+<li>a FIDO2 key. see <a href="https://git.atlanticaweb.fr/alexandre/nixos-config/src/branch/main/hosts/template">here</a>.</li>
+<li>TPM. Security is provided only if the disk is separated from the machine.
+(no security for a stolen laptop).
+<pre><code>systemd-cryptenroll /dev/sda1 --tpm2-device=auto --tpm2-pcrs=7
+clevis luks bind -d /dev/sda1 tpm2 '{&quot;pcr_ids&quot;:&quot;7&quot;}’
+</code></pre>
+</li>
+<li>not stored anywhere. The passphrase has to be entered on the keyboard on each boot.</li>
+</ul>

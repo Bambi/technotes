@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<title>flakes</title>
+<link rel="stylesheet" href="file:///home/as/.config/rucola/default_dark.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/go.min.js"></script>
+<script>hljs.highlightAll();</script>
+<h2>Nix Flakes</h2>
+<p>Flake is intended to replace <code>shell.nix</code> (<code>nix-shell</code> -&gt; <code>nix shell</code> / <code>nix develop</code>).
+It uses the same Nix language but with a different API (stdenv). Its main advantages are:</p>
+<ul>
+<li>sticky verions with the <code>flake.lock</code> file for improved reproductinility</li>
+<li>faster (use a cache system)</li>
+<li>make it possible to use sub-project <code>flake.nix</code> files.</li>
+</ul>
+<blockquote>
+<p><strong>With Flakes, <code>nix-channel</code> is ignored and becomes ineffective</strong>
+To enable flakes use <code>nix.setting.experimental-features = [ &quot;nix-command&quot; &quot;flakes&quot; ];</code> in your configuration.nix.</p>
+</blockquote>
+<p>A flake is a source tree containing a <code>flake.nix</code> file with a specific structure to describe
+<a href="https://nixos.wiki/wiki/Flakes#Input_schema">inputs and outputs</a> for a Nix project.</p>
+<p><code>flakes.lock</code> is a manifest that locks inputs and records the exact versions in use.</p>
+<p>A <a href="https://nixos.wiki/wiki/Flakes">Flake</a> is an attribute set with
+<code>inputs</code> (optional) and <code>outputs</code>.
+<code>outputs</code> is a function with 2 arguments: <code>self</code> and <code>nixpkgs</code>.
+<code>self</code> recursively references <code>outputs</code>.</p>
+<p>The <code>nix flake init</code> produces in the current directory a simple <code>flake.nix</code> file.
+Build it with <code>nix build</code>. By default it will build the <code>packages.&lt;arch&gt;.default</code>
+attribute specified in the outputs attribute but you can specify an other one
+with <code>nix build .#&lt;attribute&gt;</code>.</p>
+<blockquote>
+<p>Nix will build in the <code>$TMPDIR</code> directory or <code>/tmp</code> not set. Make sure you
+have enough space in your temporary directory!</p>
+</blockquote>
+<p>A flake build will produce a <code>flake.lock</code> file which can be refreshed with the
+<code>nix flake update</code> command.</p>
+<p>By default <code>nixpkgs</code> in the <code>outputs</code> is the lastest nixpkgs available. You can
+specify a specific version with the <code>inputs</code> attribute:</p>
+<pre><code class="language-nix">inputs {
+  nixpkgs = {
+    url = github:nixos/nixpkgs?ref=nixos_22.11
+  };
+};
+</code></pre>
+<p>A better way to import pkgs (instead of <code>legacyPackages</code>) is to define pkgs like this:</p>
+<pre><code class="language-nix">pkgs = import nixpkgs { system = &quot;x86_64-linux&quot;; };
+</code></pre>
+<p>A <code>flake.nix</code> file is an attribute-set with the followings properties:</p>
+<ul>
+<li><code>description</code>: a string describing the flake</li>
+<li><code>inputs</code>: an attrset specifying the inputs of the flake</li>
+<li><code>outputs</code>: a function that yield the nix values provided by the flake</li>
+<li><code>nixConfig</code>: a set of <code>nix.conf</code> options to be set when evaluating the flake</li>
+</ul>
+<p>Standard flake input attribute-sets are:</p>
+<ul>
+<li><code>type</code>: <code>&quot;github&quot;, &quot;sourcehut&quot;</code></li>
+<li><code>id</code>: <code>&quot;nixpkgs&quot;</code></li>
+<li><code>repo</code>:</li>
+<li><code>owner</code>:</li>
+<li><code>flake</code>: <code>true/false</code>, if false the repo does not contain a <code>flake.nix</code> file</li>
+</ul>
+<p>Standard flake <a href="https://nixos.wiki/wiki/Flakes">output schema attributes</a> are:</p>
+<ul>
+<li><code>devShells.${system}.default</code>: used with <code>nix develop command</code>.</li>
+<li><code>formatter.${system}</code></li>
+<li><code>homeConfigurations</code>: used with <code>home-manager</code> command.
+AttrSet of HM configurations each done with <code>lib.homeManagerConfiguration</code> function.</li>
+<li><code>homeManagerModules</code>: modules used by HM.</li>
+<li><code>nixosConfigurations.&lt;hostname&gt;</code>: used with <code>nixos-rebuild --flake .#&lt;hostname&gt;</code> command.</li>
+<li><code>nixosModules</code>: modules used by NixOs.</li>
+<li><code>packages.${system}.default</code>: used with <code>nix build</code> command.</li>
+<li><code>apps.${system}.default</code>: used with <code>nix run</code> command.</li>
+<li><code>overlays</code>: custom packages and modifications.</li>
+<li><code>hydraJobs</code>:</li>
+<li><code>nixConfig</code>:</li>
+<li><code>checks</code>: executed with <code>nix flake check</code>.</li>
+<li><code>templates</code>: used with <code>nix flake init -t &lt;flake&gt;#&lt;name&gt;</code>.</li>
+</ul>
+<p><code>${system}</code> refers to a string, which corresponds to the runtime system of the package.
+For example on a <code>x86_64-linux</code> system the <code>nix build</code> command will automatically
+pick the <code>packages.x86_64-linux</code> output.</p>
+<h3>Commands</h3>
+<ul>
+<li><code>nix flake show</code>: show outputs produced</li>
+<li><code>nix flake metadata</code>: show urls used</li>
+<li><code>nix flake check</code>: perform flake checks
+Common nix commands working with flakes:</li>
+<li><code>nix develop</code>: Enters a development shell with all the required development tools
+available.
+uses <code>outputs.devShells.&quot;SYSTEM&quot;.default</code>.</li>
+<li><code>nix shell</code>: Enters a runtime shell where the flake’s executables are available
+on the <code>$PATH</code>.</li>
+<li><code>nix build</code>: Builds the flake and puts the output in the <code>result</code> directory.
+uses <code>outputs.packages.&quot;SYSTEM&quot;.default</code>.</li>
+<li><code>nix run</code>: Runs the flake’s default executable, rebuilding the package first if needed.
+(runs the version in the Nix store, not the version in <code>result</code>).</li>
+<li><code>nixos-rebuild</code>: builds a nixos system.
+uses <code>outputs.nixosConfigurations.&quot;SYSTEM&quot;.default</code>.</li>
+<li><code>home-manager</code>: builds a home configuration.
+uses <code>outputs.homeConfigurations.&quot;SYSTEM&quot;.default</code>.</li>
+</ul>
+<h3>References</h3>
+<ul>
+<li><a href="https://nix-tutorial.gitlabpages.inria.fr/nix-tutorial/flakes.html">Nix Flakes Tutorial</a></li>
+<li><a href="https://edolstra.github.io/talks/nixcon-oct-2019.pdf">Nix Flakes</a></li>
+<li><a href="https://www.tweag.io/blog/2020-05-25-flakes/">Nix Flakes Examples and Tutorial</a></li>
+<li><a href="https://serokell.io/blog/practical-nix-flakes">Practical Nix Flakes</a></li>
+<li><a href="https://journal.platonic.systems/nix-flake-architecture-in-practice/">Nix Flake Architecture in Practice</a></li>
+<li><a href="https://fasterthanli.me/series/building-a-rust-service-with-nix/part-10">Making a dev shell with nix flakes</a></li>
+<li><a href="https://github.com/nix-community/templates">Nix Community Templates</a></li>
+<li><a href="https://github.com/the-nix-way/dev-templates">Nix flake templates</a></li>
+<li><a href="https://blog.sekun.net/posts/packaging-prebuilt-binaries-with-nix/">Packaging Pre-built Binaries with Nix Flake</a></li>
+<li><a href="https://primamateria.github.io/blog/neovim-nix/">How to create your own Neovim flake</a></li>
+<li><a href="https://vtimofeenko.com/posts/practical-nix-flake-anatomy-a-guided-tour-of-flake.nix/">Practical Nix flake anatomy: a guided tour of flake.nix</a></li>
+</ul>

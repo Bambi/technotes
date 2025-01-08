@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<title>uefi</title>
+<link rel="stylesheet" href="file:///home/as/.config/rucola/default_dark.css">
+<h1>UEFI Unified Extensible Firmware Interface</h1>
+<p>UEFI fait suite à l'EFI conçue par Intel. C'est une interface logicielle
+entre un firmware et un OS. Une de ses fonctions est l'amorçage d'un OS.</p>
+<p>UEFI remplace le BIOS (permet un accés réseaux, interface graphique, affranchissement
+limite 2,2 To, développé en C, architectues x86 et ARM, format GPT avec 128 partitions, ...).</p>
+<p>Le chargeur UEFI est stocké sous forme de fichier dans un système de fichier
+FAT32, FAT16 ou FAT12. UEFI supporte les tables de partition GPT et MBR.</p>
+<h2>UEFI Components</h2>
+<h3>Configuration Interface</h3>
+<p>As UEFI programs are 34/64 bits they can now display graphical user interace with
+mouse support.</p>
+<h3>UEFI System Partition</h3>
+<p>The EFI System Partition (ESP) is a special partition found on UEFI based booting machines.
+On Linux system this partition is mounted under <code>/boot/efi</code>. It contains firmwares
+used during the booting process. Some OS may install programs under the <code>EFI</code> directory
+to support dual boot.
+The EFI partition must stricly be FAT 16/32. Note that this partition is not necessarily
+a separate partition, it can be a directory in an OS FAT 16/32 partition.</p>
+<h3>GPT Partition Table Format</h3>
+<p>UEFI usually required the disk to be formatted as GPT althought it may be possible
+to use a MBR disk for booting.</p>
+<h3>Secure Boot</h3>
+<p>Usually can be enabled/disabled from the UEFI interface.
+To check your system used secured boot: <code>mokutil --sb-enabled</code>.
+To see the list of installed security keys: <code>mokutil --list-enrolled</code>
+For Linux the standard boot loader is <code>grubx64.efi</code> but if secured boot is enabled
+the the bootloader will be <code>shimx64.efi</code>. <a href="https://github.com/rhboot/shim">Shim</a>
+is a placeholder bootloader which is signed by the microsoft keys which then loads
+the actual bootloader.
+You can check your boot sequence with: <code>sudo efibootmgr -v</code>.</p>
+<h2>Shell UEFI</h2>
+<p>UEFI fournit un shell proche d'un shell Unix. Les scripts ont pour extension <code>.nsh</code>.
+Si il existe, le shell exécutera automatiquement le script <code>startup.nsh</code> au lancement.
+Identifiants (Mapping Table):</p>
+<ul>
+<li><code>FSx</code>: volumes détectés (partitions)</li>
+<li><code>BLKx</code>: devices détectés
+Commandes:</li>
+<li><code>help</code>: liste les commandes possibles</li>
+<li><code>map -r</code>: affiche la Mapping Table</li>
+<li><code>FSx:</code>: entre dans un volume
+<ul>
+<li><code>ls</code>: liste le contenu du volume</li>
+<li><code>cd &lt;dir&gt;</code>: change répertoire courant</li>
+</ul>
+</li>
+<li><code>bcfg boot dump -b</code>: affiche le boot order</li>
+<li><code>bcfg boot mv xx yy</code>: déplace l'option xx vers l'emplacement yy
+Le boot loader UEFI ext un exécutable <code>BOOTX64.EFI</code> situé dans la partition <code>efi</code>
+dans le répertoire <code>efi\boot</code>.</li>
+</ul>
+<p>Resources:</p>
+<ul>
+<li><a href="https://www.intel.com/content/dam/support/us/en/documents/motherboards/server/sb/efi_instructions.pdf">Intel UEFI Basic Instructions</a></li>
+<li><a href="https://www.sys-hint.com/3893-How-to-Use-UEFI-Interactive-Shell-and-Its-Common-Commands">UEFI Shell Tutorial</a></li>
+<li><a href="https://uefi.org/sites/default/files/resources/UEFI_Shell_2_2.pdf">UEFI Shell Specifications</a></li>
+</ul>
+<h2><a href="https://doc.ubuntu-fr.org/efibootmgr">Efibootmgr</a></h2>
+<p>Utilitaire en ligne de commande pour gérer le chargeur UEFI:</p>
+<ul>
+<li>modification de l'ordre de démarrage des OS</li>
+<li>créer ou supprimer des entrées</li>
+<li>modifier les options d'exécution du prochain démarrage.
+Voir <a href="https://www.malekal.com/efibootmgr-ajouter-changer-supprimer-des-entrees-pc-uefi/">tutoriel</a></li>
+</ul>
+<h2><a href="http://www.rodsbooks.com/refind/">rEFInd</a></h2>
+<p>Boot manager: show a list of options to the user at startup.
+(Grub is a boot manager and a boot loader, it load an OS kernel and hands off
+control to it).
+rEFInd replaces the (usualy poor) standard UEFI boot manager but uses the UEFI
+boot loader.</p>
+<h2>Linux</h2>
+<p>Chaque OS vient avec son propre boot loader: <code>BOOTMGR</code> pour Windows, <code>elilo</code> ou
+Grub/EFI pour Linux.
+Un boot UEFI standard est: Boot -&gt; UEFI Boot manager -&gt; UEFI boot loader -&gt; OS
+Le boot manager UEFI dépend du constructeur (Dell, HP, autre) et il est difficile
+pour l'OS de le configurer (mofifier les options de démarrage).
+Pour cette raison on préfère passer par un boot manager connu:
+Boot -&gt; rEFInd boot manager -&gt; UEFI boot loader -&gt; OS
+ou utiliser Grub en fin de chaine:
+Boot -&gt; UEFI boot manager -&gt; UEFI Grub -&gt; OS.</p>
+<h1>Coreboot / Libreboot</h1>
+<p>Coreboot est une alternative à UEFI/BIOS avec pour objectif de fournir un boot rapide.</p>
+<h2>Resources</h2>
+<ul>
+<li><a href="https://www.binarytides.com/bios-uefi-and-boot-process-explained/">BIOS, UEFI and the Boot process Explained along with MBR and GPT</a></li>
+<li><a href="https://lecrabeinfo.net/liste-des-touches-pour-acceder-au-bios-uefi-acer-asus-dell-lenovo-hp.html">Liste des touches pour accéder au BIOS/UEFI</a></li>
+</ul>

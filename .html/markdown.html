@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<title>markdown</title>
+<link rel="stylesheet" href="file:///home/as/.config/rucola/default_dark.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/go.min.js"></script>
+<script>hljs.highlightAll();</script>
+<h1>Markdown</h1>
+<h2>Links</h2>
+<ul>
+<li>markdown syntax: <code>[text](link)</code></li>
+<li>wiki syntax: <code>[[link|text]]</code></li>
+<li>referenced syntax: <code>[text][ref]  elsewhere: [ref]: link</code></li>
+</ul>
+<h2>Emoji</h2>
+<p><code>:smile:</code></p>
+<h2>Notes</h2>
+<ul>
+<li>in the text: <code>[^ref]</code></li>
+<li>note: <code>[^ref]: note</code></li>
+</ul>
+<h2>Blocks</h2>
+<p>Text block with an indicator:</p>
+<pre><code>&gt;[!tip] title
+&gt; text
+</code></pre>
+<p>Indicator can be:</p>
+<ul>
+<li>!note</li>
+<li>!important</li>
+<li>!info</li>
+<li>!warnibg</li>
+<li>!failure</li>
+</ul>
+<h2>Metadata</h2>
+<p>At the to or the end of the note:</p>
+<pre><code>---
+yaml metadata
+---
+</code></pre>
+<h2>Tags</h2>
+<p>To set a tag use either the metadata (<code>yaml tag: [mytag, ...]</code>)
+or <code>#mytag</code> (at the beginning of a line).</p>
+<h1>ZK</h1>
+<p>Edit a note: <code>zk edit -i</code>.</p>

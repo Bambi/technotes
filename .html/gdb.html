@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<title>gdb</title>
+<link rel="stylesheet" href="file:///home/as/.config/rucola/default_dark.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/go.min.js"></script>
+<script>hljs.highlightAll();</script>
+<h1>Remote Debugging (gdbserver)</h1>
+<p>You must have gdbserver installed on the target machine and
+gdb with the executable with debugging info on the work machine.</p>
+<p>Start gdbserver on the target machine:
+<code>gdbserver :2000 prog [prog args]</code>
+You can also attach GDBserver to a process that’s already running:
+<code>gdbserver HOST:PORT --attach PID</code>
+Run gdb on the host machine:
+<code>gdb -q prog</code>
+Connect to the target:
+<code>target remote ip:2000</code></p>
+<h1>Tracepoints</h1>
+<h2>dprintf</h2>
+<p><code>dprintf location, template, expression [, expression...]</code>
+Prints a statement evrytime it reach the location.
+Ex: <code>dprintf http_handler.c:205, &quot;URL: %s\n&quot;, http_ctx-&gt;url</code></p>
+<h2>break commands</h2>
+<pre><code>break location [if condition]
+commands
+  [silent]
+  ... command list ...
+  continue
+end
+</code></pre>
+<p>The silent statment tells gdb to ommit the usual status print-outs when a breakpoint is hit (“Breakpoint 1 …”). The continue statment causes gdb to continue execution after the commands are processed.</p>
+<p>The above dprintf example can be reproduced using break commands as follows:</p>
+<pre><code>break http_handler.c:203
+commands
+  silent
+  printf &quot;URL: %s\n&quot;, http_ctx-&gt;url
+  continue
+end
+</code></pre>
+<p>This listing will print the stack trace, each time the read syscall was hit:</p>
+<pre><code>catch syscall read
+commmands
+   backtrace
+   continue
+end
+</code></pre>
+<h1>Invoking GDB</h1>
+<ul>
+<li><code>-x ,file</code>
+Execute commands from file file.</li>
+<li><code>-ex command</code>
+Execute a single GDB command. May be used multiple times:
+<code>gdb -ex 'target sim' -ex 'load' -ex 'run' a.out</code></li>
+<li><code>-p number</code>
+Connect to process ID number, as with the attach command.</li>
+<li><code>-batch</code>
+Run in batch mode. Exit with status 0 after processing all the command files specified with ‘-x’ (and all commands from initialization files, if not inhibited with ‘-n’).</li>
+</ul>

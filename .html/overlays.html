@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<title>overlays</title>
+<link rel="stylesheet" href="file:///home/as/.config/rucola/default_dark.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/go.min.js"></script>
+<script>hljs.highlightAll();</script>
+<h2>Overriding And Overlays</h2>
+<p>Overriding consist of modifying a package and producing a new separate package.
+Overlays consist of modifying a package without producing a separate package, the new
+package will replace the original one.</p>
+<p>There are 2 main functions that can be used: <code>override</code> overrides arguments of a function
+(i.e. the dependencies of a package), and <code>overrideAttrs</code> overrides the package definition itself:</p>
+<pre><code class="language-nix">{ stdenv, bar, baz }: # this part gets overriden by `override`
+stdenv.mkDerivation { # This part gets overriden by overrideAttrs
+  pname = &quot;test&quot;;
+  version = &quot;0.0.1&quot;;
+  buildInputs = [bar baz];
+  phases = [&quot;installPhase&quot;];
+  installPhase = &quot;touch $out&quot;;
+}
+</code></pre>

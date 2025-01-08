@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<title>alpine</title>
+<link rel="stylesheet" href="file:///home/as/.config/rucola/default_dark.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/go.min.js"></script>
+<script>hljs.highlightAll();</script>
+<h1>Alpine Linux</h1>
+<h2>Administration</h2>
+<h3>Apk</h3>
+<p><a href="https://wiki.alpinelinux.org/wiki/Alpine_Package_Keeper">Alpine Package Keeper</a>
+Package manager used by Alpine.</p>
+<ul>
+<li>List installed packages: <code>apk info</code></li>
+<li>Install a package: <code>apk add &lt;pkg&gt;</code></li>
+<li>Show information on a package: <code>apk info -a &lt;pkg&gt;</code></li>
+<li>To determine which package a file belongs to: <code>apk info --who-owns &lt;path&gt;</code></li>
+</ul>
+<h3>Local Backup Utility (lbu)</h3>
+<p>Tool used to save and restore the overlayfs used with a read-only root filesystem.
+Configuration is stored in <code>/etc/lbu/lbu.conf</code>.
+<code>LBU_MEDIA</code> must point to a directory inside <code>/media</code> which will contain saved configuration.</p>
+<ul>
+<li>List modified files from previously stored configuration: <code>lbu status</code></li>
+<li>Show current differences from the previously stored configuration: <code>lbu diff</code></li>
+<li>Store current configuration: <code>lbu ci</code></li>
+</ul>
+<p>Manually installed packages can be saved and restored by lbu.
+A cache to store packages must be initialized with the command <code>setup-apkcache</code>.</p>
+<h3>OpenRc</h3>
+<p><a href="https://www.cyberciti.biz/faq/how-to-enable-and-start-services-on-alpine-linux/">How to enable and start services on Alpine Linux</a>
+<a href="https://wiki.alpinelinux.org/wiki/OpenRC">OpenRC</a>
+<a href="https://wiki.alpinelinux.org/wiki/Writing_Init_Scripts">Writing Init Scripts</a>
+Used by Alpine instead of systemd.</p>
+<ul>
+<li>List available services: <code>rc-service --list</code></li>
+<li>List available runlevels: <code>rc-status --list</code></li>
+<li>Launch a service automatically: <code>rc-update add &lt;srv&gt; &lt;level&gt;</code></li>
+<li>Remove a service with: <code>rc-update del &lt;srv&gt; &lt;level&gt;</code>
+Normal services use the default runlevel.</li>
+<li>Start/Stop/Restart a service: <code>rc-service &lt;srv&gt; start|stop|restart</code> or
+<code>/etc/init.d/&lt;srv&gt; start|stop|restart</code></li>
+<li>List all active services: <code>rc-update show</code></li>
+</ul>
+<h2>Other</h2>
+<h3>Docker</h3>
+<p>To make a docker Alpine image, use the Alpine miniroot:</p>
+<pre><code>FROM scratch
+
+ENV ALPINE_ARCH x86_64
+ENV ALPINE_VERSION 3.9.1
+
+ADD alpine-minirootfs-${ALPINE_VERSION}-${ALPINE_ARCH}.tar.gz /
+CMD [&quot;/bin/sh&quot;]
+</code></pre>
+<h3>Recipes</h3>
+<p>Udev
+Udev is not installed by default and must be installed with <code>apk add eudev</code>.
+Service <code>udev</code> and <code>udev-trigger</code> must be added to the <code>sysinit</code> runlevel.</p>
+<h2>Cubie Board Install</h2>
+<p>Clean SD card with: <code>dd if=/dev/zero of=${card} bs=1M count=1</code></p>
+<p>Download and extract Alpine Armv7 tarball some where.</p>
+<p>Flash Cubie board bootloader:
+<code>dd if=alpine-uboot-3.18.2-armv7/u-boot/Cubieboard/u-boot-sunxi-with-spl.bin of=${card} bs=1024 seek=8</code></p>
+<p>Create /root partition starting at 1M or 2M with fdisk. Flag partition as boot partition.
+Format partition: <code>mkfs.ext4 ${card}${p}1</code> as a FAT32 partition type
+(called W95 FAT32 (LBA) and its ID is 0xc with fdisk).</p>
+<p>Create an other partition for the data partition (~5G) (will be formatted by setup script).
+Mount partition: <code>mount ${card}${p}1 /mnt</code> and copy folders <code>extlinux, apks, boot, alpine.apkovl.tar.gz</code>.
+Create an answer file for setup-alpine and put it under directory <code>setup</code> in the root partition.</p>
+<h2>Alpine Install</h2>
+<p>Boot the SD card. Use serial console. Login with user root (no password).
+Launch setup: <code>setup-alpine -f /media/mmcblk0p1/setup/install</code></p>
+<p>Example setup/install answer file:</p>
+<pre><code class="language-bash"># Example answer file for setup-alpine script
+# If you don't want to use a certain option, then comment it out
+
+# Use US layout with US variant
+KEYMAPOPTS=&quot;none&quot;
+
+# Set hostname to alpine-test
+HOSTNAMEOPTS=&quot;cubie&quot;
+
+# Contents of /etc/network/interfaces
+INTERFACESOPTS=&quot;auto lo
+iface lo inet loopback
+
+auto eth0
+iface eth0 inet dhcp
+    hostname cubie
+&quot;
+
+# Set timezone to UTC
+TIMEZONEOPTS=&quot;Europe/Paris&quot;
+
+# set http/ftp proxy
+PROXYOPTS=none
+
+# Add a random mirror
+APKREPOSOPTS=&quot;mirrors.ircam.fr&quot;
+
+# Create admin user
+USEROPTS=&quot;-a -u -g audio,video,netdev gribouille&quot;
+
+# Install Openssh
+SSHDOPTS=&quot;dropbear&quot;
+
+# Use openntpd
+NTPOPTS=&quot;busybox&quot;
+
+# Use a data disk
+DISKOPTS=&quot;-m data /dev/mmcblk0p2&quot;
+
+# Setup in /media/sdb1
+LBUOPTS=&quot;/media/mmcblk0p1&quot;
+APKCACHEOPTS=&quot;/media/mmcblk0p1/cache&quot;
+</code></pre>
+<h2>Administration</h2>
+<p><a href="https://wiki.alpinelinux.org/wiki/Setting_up_a_SSH_server">Installing a package</a></p>
+<h2>Various</h2>
+<p><a href="https://shorewall.org/SplitDNS.html">Simple way to set up Split DNS</a></p>
+<h2>References</h2>
+<ul>
+<li><a href="https://wiki.alpinelinux.org/wiki/Alpine_on_ARM">Alpine on ARM</a></li>
+<li><a href="https://linux-sunxi.org/Manual_build_howto">SUNXI: Manual build howto</a></li>
+</ul>

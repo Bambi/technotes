@@ -1,0 +1,10 @@
+<!DOCTYPE html>
+<title>git</title>
+<link rel="stylesheet" href="file:///home/as/.config/rucola/default_dark.css">
+<h1>Git</h1>
+<h2>Problems &amp; Solutions</h2>
+<p><code>warning: remote HEAD refers to nonexistent ref, unable to checkout.</code>
+solution: go to your repo and issue <code>git symbolic-ref HEAD refs/heads/&lt;branch&gt;</code>
+where <code>branch</code> is the default branch name you want to use.</p>
+<p>Github turned off git protocol (port 9418, url like <code>git::</code>). To use https in
+place of git tranparently use <code>git config --global url.&quot;https://&quot;.insteadOf git://</code>.</p>

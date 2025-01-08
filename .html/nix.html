@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<title>nix</title>
+<link rel="stylesheet" href="file:///home/as/.config/rucola/default_dark.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/go.min.js"></script>
+<script>hljs.highlightAll();</script>
+<h1>Nix Ecosystem</h1>
+<p>Nix is a language, a package manager (written with the Nix language) and a
+Linux distribution (NixOS) using the Nix package manager.</p>
+<h2>Package Management</h2>
+<p>Nix stores all packages into a common place called the Nix store, usually located at <code>/nix/store</code>.
+Each package is stored is stored in a unique subdirectory.
+The package path is composed of a cryptographic hash of all the package inputs followed by the package name.
+This system allow the presence of multiple version of the same package.
+To make package available to the user rely on environment variables manipulation.</p>
+<h3>Profiles</h3>
+<p>A profile describes an environment (a set of packages that are made available to the user).
+A user have a default (or current) profile (<code>~/.nix-profile</code>) but one can create new profiles.
+Profiles are managed with the command <code>nix-env</code>.</p>
+<p><code>nix-env --switch-profile=PATH</code> makes your default profile point to an other profile.
+If PATH does not exist it will be created.
+All nix-env commands take an optional <code>-p PATH</code> argument which specify the profile
+to use. If not present it will use the default profile.</p>
+<p><a href="https://search.nixos.org/packages">Nix Packages</a> can be installed with the
+<code>nix-env -iA nixpkgs.&lt;pkg&gt;</code> command.</p>
+<p><code>nix-env -q</code> will show currently installed packages.</p>
+<p><code>nix-env --rollback</code> go back to the previous modification of the profile.</p>
+<p><code>nix-env -e &lt;pkg&gt;</code> to remove a package from the profile.</p>
+<p>If you do <code>nix-env -e '*'</code> it will remove all packages from the environment,
+including <code>nix</code>.</p>
+<p>Each time a <code>nix-env</code> operation is done a new <em>generation</em> is created.
+You can list generations with <code>nix-env --list-generations</code> and restore a
+generation with <code>nix-env --switch-generation &lt;gen number&gt;</code>.
+(use <code>nix-env --delete-generations &lt;space-separated gen list&gt;</code> to free some space
+or <code>nix-env --delete-generations old</code>).</p>
+<p>To rollback you can also locate a nix derivation in the nix store
+(<code>ls /nix/store/*-nix*</code>) and either:</p>
+<ul>
+<li>rollback: <code>/nix/store/&lt;nix-path&gt;/bin/nix-env --rollback</code></li>
+<li>install nix again: <code>/nix/store/&lt;nix-path&gt;/bin/nix-env -i /nix/store/&lt;nix path&gt;/bin/nix-env</code></li>
+</ul>
+<h3>Profiles with <code>nix profile</code></h3>
+<p>This is the new command for profiles instead of <code>nix-env</code>.</p>
+<ul>
+<li><code>nix profile install nixpkgs#jq</code> install the jq package from the <code>nixpkgs</code> registry
+in the default profile <code>~/.nix-profile</code>. Use the <code>--profile &lt;path&gt;</code> arg to use
+an other profile.</li>
+<li><code>nix profile remove</code> uninstall a package.</li>
+<li><code>nix profile list</code> list installed packages.</li>
+<li><code>nix store gc</code> delete packages ony used by deleted profiles or generations.</li>
+<li><code>nix profile wipe-history [--older-than 30d]</code> will delete older generations of
+a profile (by default it will delete all non current).</li>
+</ul>
+<h3>Channels</h3>
+<p>The packages available in Nix are defined in a git repository that contains
+the definition of all the packages. A channel, can be seen as a nixpkgs (git) branch.</p>
+<p><code>nix-channel --list</code> list channels installed on the system.</p>
+<p>The default Nix installer add the unstable nixpkgs channel which is a rolling-release
+channel. You can update your packages with:</p>
+<pre><code class="language-console">nix-channel --update
+nix-env -iA nixpkgs.nix nixpkgs.cacert
+</code></pre>
+<p>if no channel is installed you must add one with the command:
+<code>nix-channel --add https://nixos.org/channels/nixpkgs-unstable</code></p>
+<h2>Language</h2>
+<p>You can use <code>nix repl</code> to get a Nix language interpretor.</p>
+<p>Values in the Nix language can be primitive data types, lists, attribute sets, and functions.</p>
+<p>To assign names to values use: attributes sets (structures) or let expression (variables)
+with the <code>=</code> sign: on the left is the assigned name and on the right is the value
+delimitted by a <code>;</code>.</p>
+<h3>Primitive Data Types</h3>
+<p>Integers: <code>1</code>. Strings are declared between double quotes: <code>&quot;string&quot;</code>.</p>
+<p>String interpolation <code>${ ... }</code> allow inserting a nix expression in a string:</p>
+<pre><code class="language-nix">let
+  name = &quot;Nix&quot;;
+in
+&quot;hello ${name}&quot;
+</code></pre>
+<p>Multi-line (or indented) strings are denoted by double single quotes:</p>
+<pre><code class="language-nix">''
+multi
+line
+string
+''
+
+&quot;multi\nline\nstring\n&quot;
+</code></pre>
+<p>File system path are directly inserted (without quotes). Absolute path start
+with a <code>/</code> and relative path does not but must contains a least one <code>/</code>.
+Relative path are relative to the file containing the expression.</p>
+<p>Search path are between angle brackets: <code>&lt;nixpkgs&gt;</code>.</p>
+<h3>Lists</h3>
+<p>Lists are defined with <code>[]</code> and each element are separated with spaces.</p>
+<h3>Atribute Sets</h3>
+<p>Attribute sets are a collection of name-value pairs, where names must be unique:</p>
+<pre><code class="language-nix">{
+  bool = true;
+  int = 1;
+  attribute-set = {
+    str = &quot;hello&quot;;
+    lst = [ 1 &quot;val&quot; ];
+  };
+}
+</code></pre>
+<p>Recusive attribute set allows access to attributes from within the set:</p>
+<pre><code class="language-nix">rec {
+  one = 1;
+  two = one + 1;
+}
+</code></pre>
+<p>Atributes in a set are accessed with a <code>.</code>. Ex: <code>rec.one</code>.</p>
+<h3>Let Expressions</h3>
+<p>Let expression allow defining local variables for inner expressions:
+<code>let &lt;variable list&gt;; in &lt;expression&gt;</code>.</p>
+<pre><code class="language-nix">let
+  a = 1;
+in
+  a + a
+</code></pre>
+<p>will evaluate to 2.</p>
+<h3>With Expressions</h3>
+<p><code>with</code> expression allows access to attributes without repeatedly referencing their attribute set:
+<code>with &lt;attribute set&gt;; &lt;expression&gt;</code></p>
+<pre><code class="language-nix">with a; [ x y z ];  ~&gt;  [ a.x a.y a.z ];
+</code></pre>
+<p>Attributes made available through <code>with</code> are only in scope of the expression following the semicolon.</p>
+<h3>If Expressions</h3>
+<p><code>if &lt;bool&gt; then &lt;expr&gt; else &lt;expr&gt;</code>.</p>
+<pre><code class="language-nix">if a &gt; b then &quot;yes&quot; else &quot;no&quot;
+</code></pre>
+<p>You can't have only the then branch, you must specify also the else branch,
+because an expression must have a value in all cases.</p>
+<h3>Inherit</h3>
+<p><code>inherit</code> is used to repeat an attribute. <code>inherit perl</code> is equivalent to <code>perl = perl</code>.</p>
+<h3>Functions</h3>
+<p>A function always takes exactly one argument. Argument and function body are separated by a colon (<code>:</code>).
+on the left is the function argument and on the right is the function body.</p>
+<p>Examples: single arg, attribute set arg, with default attributes, additional attributes allowed:</p>
+<pre><code class="language-nix">x: x + 1
+{ a, b }: a + b
+{ a, b ? 0 }: a + b
+{ a, b, ...}: a + b
+</code></pre>
+<p>Functions have no names (lambda). Assign them to a variable to reference them:</p>
+<pre><code class="language-nix">f = arg : &quot;prefix ${arg}&quot;
+</code></pre>
+<p>To have more than 1 argument, either:</p>
+<ul>
+<li>use multiple functions each with one parameter.</li>
+</ul>
+<pre><code class="language-nix">  x = a: b: &quot;${a} ${b}&quot;  # same as x = a: (b: &quot;${a} ${b}&quot;)
+  (x &quot;stra&quot;) &quot;str b&quot; # same as x &quot;stra&quot; &quot;strb&quot;
+</code></pre>
+<p>You can make partial evaluation:</p>
+<pre><code class="language-nix">  y = x &quot;str a&quot;
+  y &quot;str b&quot;
+</code></pre>
+<ul>
+<li>use a structure as the argument.</li>
+</ul>
+<pre><code class="language-nix">  {a, b}: &quot;${toString a} ${toString b}&quot;
+</code></pre>
+<p>and it is possible to declare a default value for an argument:</p>
+<pre><code class="language-nix">  {a, b ? 2}: &quot;${toString a} ${toString b}&quot;
+</code></pre>
+<h3>Calling Functions</h3>
+<p>Write the argument after the function:</p>
+<pre><code class="language-nix">let
+  f = x: x + 1;
+in f 1
+</code></pre>
+<h3>Builtins</h3>
+<p><code>builtins</code> are functions built into the language. They are described in the
+<a href="https://nixos.org/manual/nix/stable/language/builtins.html">manual</a>
+and can be listed with <code>builtins.toString</code>. Most used are <code>toJSON</code>, <code>fromJSON</code>,
+<code>toPath</code>, <code>fromPath</code>, <code>fetchGit</code>, <code>fetchTarball</code>.</p>
+<h3>Import</h3>
+<p><code>import</code> takes a path to a Nix file, reads it to evaluate the contained Nix expression,
+and returns the resulting value.</p>
+<p>The <a href="https://github.com/NixOS/nixpkgs">nixpkgs</a> repository contains an attribute set
+called <code>lib</code>, which provides a large number of useful functions.
+They are described <a href="https://nixos.org/manual/nixpkgs/stable/#sec-functions-library">here</a>.</p>
+<pre><code class="language-nix">let
+  pkgs = import &lt;nixpkgs&gt; {};
+in
+pkgs.lib.strings.toUpper &quot;search paths considered harmful&quot;
+</code></pre>
+<p>Import works with a file (<code>import ./fic.nix</code>) or NIX_PATH entries (<code>import &lt;nixpkgs&gt;</code>)
+which contains named aliases for file paths containing Nix expressions.</p>
+<h3>Operators</h3>
+<ul>
+<li><code>++</code>: List concatenation: <code>[ a ] ++ [ b ] -&gt; [ a b ]</code>.</li>
+<li><code>//</code>: Attribute sets merge (union of the 2 sets): <code>{ a; } // { b; } -&gt; { a; b; }</code>.
+In case of conflicts between the attributes, the value on the right is prefered.</li>
+</ul>
+<h3>Nix Idoms</h3>
+<p>Not part of the language specification, but will commonly be encountered in the
+Nix community.</p>
+<h4>File Lambdas</h4>
+<p>A Nix file define a function that receives the files dependencies, instead of
+importing them directly in the file (allowing users of your code to change some
+dependencies with <code>import ./fic.nix { dep1 = x ... }</code>).</p>
+<h4>callPackage</h4>
+<p>Building on the previous pattern, a file (which need for ex <code>stdenv</code> as dependency)
+can be imported with the <code>callPackage</code> function:
+<code>let my-funky-program = pkgs.callPackage ./my-funky-program.nix {};</code>.
+The callPackage function looks at the expected arguments (via builtins.functionArgs,
+<code>stdenv</code> in this example) and passes the appropriate keys from the set in which
+it is defined as the values for each corresponding argument (whithout having to
+explicitely specify them).</p>
+<h3>Overriding</h3>
+<p>One of the most powerful features of Nix is that the representation of all build
+instructions as data means that they can easily be overridden to get a different result.
+(in Nix, overriding functions make change to a package and return only a single package,
+while overlays can be used to combine the overridden packages across the entire
+package set of Nixpkgs.)</p>
+<h2>Nix Files</h2>
+<p>Nix commands can be stored in a file and interpreted with <code>nix eval -f &lt;file&gt;</code>.
+A file can only have 1 Nix expression and return 1 result.
+Use the <code>let</code> operator to have more expressions.</p>
+<p>Use the <code>import</code> operator to use an expression from an other file:</p>
+<pre><code class="language-nix">let
+  a = 1;
+  b = 2;
+  f = import ./file.nix;
+in
+  f a b
+</code></pre>
+<p>Common Nix files used are:</p>
+<ul>
+<li><code>shell.nix</code>: default file used with the <code>nix-shell</code> command.</li>
+<li><code>default.nix</code>: default file used with the <code>nix-build</code> command.
+or the <code>nix-shell</code> command if no <code>shell.nix</code> found.
+Use <code>callPackage</code> to import <code>derivation.nix</code>.</li>
+<li><code>derivation.nix</code>: nixpkgs style derivation file.</li>
+<li><code>flake.nix</code>: default file used with the <code>nix shell</code> and <code>nix develop</code> commands.</li>
+<li><code>module.nix</code>: NixOS module file, import <code>default.nix</code>.</li>
+<li><code>test.nix</code>: NixOS test file.</li>
+<li><code>release.nix</code>: Hydra jobset declaration.</li>
+</ul>
+<h2>Nix Shell</h2>
+<p>Nix shell has two purposes:</p>
+<ul>
+<li>opening a shell to use a package (ex <code>nix-shell -p hello</code>).</li>
+<li>opening a shell to build a project interactively (ex <code>nix-shell '&lt;nixpkgs&gt;' -A hello</code>)
+producing a shell where <code>buildPhase</code> is available to build <code>hello</code>.</li>
+</ul>
+<p>If you want a shell to <em>use</em> a package <a href="https://discourse.nixos.org/t/shell-nix-but-with-flakes/18775">you should use flakes</a>.</p>
+<p><code>shell.nix</code> file contains a function which takes a package as the parameter:</p>
+<pre><code class="language-nix">{pkgs ? import &lt;nixpkgs&gt; {}}:
+pkgs.mkShell {}
+</code></pre>
+<p>The function is evaluated with the <code>nix-shell &lt;file&gt; [--pure]</code> command
+(the <code>--pure</code> option does not import environment variables from the current shell).</p>
+<p>Use <code>mkShell</code> function with <code>buildInput</code> argument to install software:</p>
+<pre><code class="language-nix">{pkgs ? import &lt;nixpkgs&gt; {}}:
+  pkgs.mkShell {
+    buildInputs = with pkgs; [cowsay sl];
+    # buildInputs = [pkgs.cowsay pkgs.sl];  # same expression
+  }
+</code></pre>
+<h2>Nix Derivation</h2>
+<p>A derivation is a set of building instructions and associated inputs
+(such as the compiler) needded to build a package and is written in the Nix language.
+Derivations can be written for packages or even entire systems.
+Derivations depends only on pre-defined set of inputs, so they are reproductible.
+They are built (realized) with the Nix package manager.</p>
+<p>A derivation is a special type of attibute-sets created with the <code>derivation</code>
+function. The Nix package manger will then evaluate this derivation, and use the
+result to copy the built package into the Nix store. The set passed to the
+<code>derivation</code> function have 3 mandatory attributes:</p>
+<ul>
+<li><code>system</code> which defines the architecture and the OS of the package (<code>any</code> if it
+is portable to any architectures).</li>
+<li><code>name</code> which is the package name.</li>
+<li><code>builder</code> is a program to run to build the derivation.</li>
+</ul>
+<pre><code class="language-nix">derivation {
+  builder = ./builder.sh;
+  src = ./hello.sh;
+  system = &quot;any&quot;;
+}
+</code></pre>
+<p>Can be built with <code>nix build -f &lt;fic.nix&gt;</code>.
+Because a derivation is build in a bare sandbox environment (with only sh and
+no coreutils) it is usualy better to use <code>stdenv.mkDerivation</code>:</p>
+<ul>
+<li>the default sandbox is provided with a bash interpreter, coreutils, tar, gzip,
+patch, C and C++ compiler, patchelf etc.</li>
+<li>easy way to add extra dpendencies.</li>
+<li>provide a default builder <code>./configure &amp;&amp; make</code>.
+It also provides a few useful environment variables:</li>
+<li><code>$name</code> is the package name.</li>
+<li><code>$src</code> refers to the source directory.</li>
+<li><code>$out</code> is the path to the location in the Nix store where the package will be added.
+This is where build artefacts should be installed.</li>
+<li><code>$system</code> is the system that the package is being built for.</li>
+<li><code>$PWD</code> and <code>$TMP</code> both point to a temporary build directories</li>
+<li><code>$HOME</code> and <code>$PATH</code> point to nonexistent directories, so the build cannot rely on them.</li>
+</ul>
+<p><code>nix build .#</code> will build the entry defined in <code>packages.&lt;system&gt;.default</code> in the output of the
+<code>flake.nix</code> file. You can also build a specific entry with ex <code>nix build .#packages.x86_64-linux.debug</code>.</p>
+<h3><a href="https://blog.ielliott.io/nix-docs/mkDerivation.html">mkDerivation</a></h3>
+<p>stdenv.mkDerivation is a function that helps you produce a derivation from source.
+It divides the build into <em>phases</em>, all of which include a bit of default behavior.
+Most important phases are:</p>
+<ul>
+<li><em>unpack</em>: untar, unzip or copy yours sources into the nix store</li>
+<li><em>patch</em>: apply any patch provided in the <code>patches</code> variable</li>
+<li><em>configure</em>: runs <code>./configure</code> or any equivalent depending on the build system</li>
+<li><em>build</em>: runs <code>make</code> or equivalent</li>
+<li><em>check</em>: runs <code>make check</code> or equivalent, skipped by default</li>
+<li><em>install</em>: runs <code>make install</code> or equivalent</li>
+<li><em>fixup</em>: automagically fixes up things that do not work well with the nix store
+such a incorrect interpreter paths</li>
+<li><em>installCheck</em>: runs <code>make installCheck</code> or equivalent</li>
+</ul>
+<p>Core attributes:</p>
+<ul>
+<li><code>pname</code>: package name</li>
+<li><code>version</code>: package version</li>
+<li><code>name</code>: derivation name, defaults to <code>${pname}-${version}</code>
+either pname+version or name is required</li>
+<li><code>src</code>: path to package source directory</li>
+<li><code>buildInputs</code>: build-time dependencies with the same arch than the hostPlatform.
+Derivation can link agains those inputs. Usually for libraries.</li>
+<li><code>nativeBuildInputs</code>: only available on the buildPlatform and used at build-time.
+Used for cross-compilation. Usually for build tools.</li>
+<li><code>*Phase</code>: bash commands to execute for each phase.</li>
+<li><code>checkInputs</code>, <code>nativeCheckInputs</code>: lib/tools used for checks.</li>
+<li><code>doCheck</code>: (true/false), enable checks (disabled by default).</li>
+</ul>
+<blockquote>
+<p>for generic hash use <code>hash = &quot;sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=&quot;;</code></p>
+</blockquote>
+<p>References:</p>
+<ul>
+<li><a href="https://elatov.github.io/2022/01/building-a-nix-package/">Building a Nix Package</a></li>
+<li><a href="https://github.com/samdroid-apps/nix-articles/blob/master/04-proper-mkderivation.md">Proper mkDerivation</a></li>
+<li><a href="https://scrive.github.io/nix-workshop/04-derivations/01-derivation-basics.html">Nix Derivations</a></li>
+</ul>
+<h2>Nix Packages</h2>
+<p>A Nix derivation is a package:</p>
+<pre><code class="language-nix">let pkgs = import &lt;nixpkgs&gt; {};
+in pkgs.stdenv.mkDerivation {
+  name = &quot;myPackage&quot;;
+  src = ./.;
+  installPhase = ''
+    mkdir -p $out
+    echo &quot;my package&quot; &gt; $out/result
+  ''
+}
+</code></pre>
+<p>Build this package with the command <code>nix build &lt;file&gt;</code>.
+Building a package from a github repo:</p>
+<pre><code class="language-nix">let pkgs = import &lt;nixpkgs&gt; {};
+in pkgs.stdenv.mkDerivation {
+  name = &quot;catimg&quot;;
+  nativeBuildInputs = [pkgs.cmake];
+  src = pkgs.fetchFromGitHub {
+    rev = &quot;&lt;commit sha&gt;&quot;;
+    repo = &quot;catimg&quot;;
+    owner = &quot;posva&quot;;
+    sha256 = &quot;&lt;download sha256 hash&gt;&quot;;
+  }
+}
+</code></pre>
+<h2><a href="nix/nixos.md">NixOS</a></h2>
+<h2><a href="nix/home-manager.md">Home Manager</a></h2>
+<h2><a href="nix/modules.md">Modules</a></h2>
+<h2>Nix Development</h2>
+<p>Commands that are useful during Nix development:</p>
+<ul>
+<li><code>nix eval --file &lt;file&gt;</code>: evaluate the file (ex for syntax checking), even flake.nix files</li>
+<li><code>nix flake check</code>: check the current flake.nix file, as flake is a subset of Nix language</li>
+<li><code>nix flake info</code></li>
+<li><code>nix flake show</code>: show flake outputs.</li>
+</ul>
+<h2><a href="nix/flakes.md">Nix Flakes</a></h2>
+<h2>VM/ISO Build</h2>
+<h3>References</h3>
+<ul>
+<li><a href="https://gist.github.com/573/c1d73a4fd04b8f8ca63885393856f9ea"></a></li>
+<li><a href="https://github.com/nh2/nixos-vm-building">Example NisOS config in VM</a></li>
+<li><a href="https://gist.github.com/FlakM/0535b8aa7efec56906c5ab5e32580adf">vm/flakes example</a></li>
+</ul>
+<h2>Miscellaneous</h2>
+<h3>Nix Install Without Root Access</h3>
+<p>A few options are possible:</p>
+<ul>
+<li>using a <a href="https://zameermanji.com/blog/2023/3/26/using-nix-without-root/">nix static binary</a>.</li>
+<li>using <a href="https://github.com/DavHau/nix-portable">Nix portable</a>: it is a static
+nix binary with bubblewrap and proot included.</li>
+<li>using <a href="https://github.com/nix-community/nix-user-chroot">nix-user-chroot</a>.</li>
+</ul>
+<h3>NixOS on WSL</h3>
+<p>See <a href="https://github.com/nix-community/NixOS-WSL">NixOS-WSL</a> for instructions on
+installing NixOS on WSL.
+Warning: On first boot after installation you must issue the command <code>sudo nix-channel --update</code>
+before doing a system update (<code>nixos-rebuild switch</code>).</p>
+<h3>Notes</h3>
+<p><code>nix-collect-garbage</code> free up some disk space.
+<code>sudo nix-store --repair --verify --check-contents</code> in case of corruption.</p>
+<p><code>nix build &quot;nixpkgs#bat&quot;</code> nixpkgs is a flake reference in the
+<a href="https://github.com/NixOS/nixpkgs">NixOS/nixpkgs</a> repository on GitHub,
+while <code>#bat</code> indicates that we're building the bat output from the Nixpkgs flake.</p>
+<p><code>nix edit -f &quot;&lt;nixpkgs&gt;&quot; hello</code> will show (in editor) the definition of package <code>hello</code>.</p>
+<p>Code search: <code>https://github.com/search?q=buildNpmPackage+repo%3ANixOS%2Fnixpkgs&amp;type=code&amp;p=2</code></p>
+<p>Switching to a specific Nixos generation (<code>nixos-rebuild switch --rollback</code> only
+switch to the previous generation):</p>
+<ul>
+<li><code>sudo nix-env --switch-generation /&lt;gen number&gt; -p /nix/var/nix/profiles/system</code>
+<code>sudo /nix/var/nix/profiles/system/bin/switch-to-configuration switch</code>
+(use <code>nixos-rebuilt list-generations</code> to list available generations)</li>
+</ul>
+<h2>References</h2>
+<ul>
+<li><a href="https://github.com/mikeroyal/NixOS-Guide">NixOS Guide</a></li>
+<li><a href="https://nix.dev/tutorials/nix-language">Nix Language Basics</a></li>
+<li><a href="https://nixos.org/learn.html">Nix Learn</a></li>
+<li><a href="https://sr.ht/~misterio/nix-config/">NixOS configurations</a></li>
+<li><a href="https://gitlab.com/Oglo12/nixos-config">Oglo12 NixOS Configuration</a></li>
+<li><a href="https://nix-tutorial.gitlabpages.inria.fr/nix-tutorial/getting-started.html">Nix Tutorial</a></li>
+<li><a href="https://serokell.io/blog/practical-nix-flakes">Practical Nix Flakes</a></li>
+<li><a href="https://xeiaso.net/blog/nix-flakes-4-wsl-2022-05-01/">NixOs on WSL</a></li>
+<li><a href="https://ianthehenry.com/posts/how-to-learn-nix/">How to Learn Nix</a></li>
+<li><a href="https://linuxfr.org/news/nix-pour-les-developpeurs">Nix pour les développeurs</a></li>
+<li><a href="https://linuxfr.org/news/gestion-de-paquets-et-devops-avec-nix-tour-d-horizon-sur-un-cas-concret">Gestion de paquets et DevOps avec Nix</a></li>
+<li><a href="https://linuxfr.org/news/gestion-de-paquets-evoluee-avec-nix-cachix-overlays-et-home-manager">Gestion de paquets évoluée avec Nix</a></li>
+<li><a href="https://devenv.sh/">devenv</a></li>
+<li><a href="https://github.com/Misterio77/nix-starter-configs">Nix Starter Config</a></li>
+<li><a href="https://github.com/gvolpe/nix-config">XMonad NixOS Config</a></li>
+<li><a href="https://williamvds.me/blog/journey-into-nix/">A Journey into Nix and NixOS</a></li>
+<li><a href="https://nix4noobs.com/">Nix 4 Noobs</a></li>
+<li><a href="https://search.nix.gsc.io/">NixOS Github Sources Search</a></li>
+</ul>
+<h2>Configuration Examples</h2>
+<ul>
+<li><a href="https://github.com/foo-dogsquared/nixos-config">Complete Conf</a>
+<a href="https://foo-dogsquared.github.io/nixos-config/01-introduction/">with comments</a></li>
+<li><a href="https://github.com/prasanthrangan/hyprdots">Hyprdots</a></li>
+<li><a href="https://gitlab.com/Zaney/zaneyos">ZaneyOS</a></li>
+</ul>
+<p>qemu https://superuser.com/questions/1087859/how-to-quit-the-qemu-monitor-when-not-using-a-gui</p>

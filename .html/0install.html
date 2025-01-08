@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<title>0install</title>
+<link rel="stylesheet" href="file:///home/as/.config/rucola/default_dark.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/go.min.js"></script>
+<script>hljs.highlightAll();</script>
+<h1>0install</h1>
+<p>Use feed files (XML) to define program installation. Programs are installed in a cache
+(private or shared) and downloaded or updated automatically.</p>
+<h2>Application install</h2>
+<p>Run a program directly: <code>0install run &lt;feed&gt;</code></p>
+<p>Create an alias (application): <code>0install add &lt;app&gt; &lt;feed&gt;</code></p>
+<h2>Packaging</h2>
+<p>Use 0publish: <code>0install add 0publish https://apps.0install.net/0install/0publish.xml</code>.
+You will also need a gpg key for signing.</p>
+<p>First create a new feed with <code>0publish app.xml</code>.</p>
+<p>Download the app you want to publish. Then add a new release with:</p>
+<pre><code>0publish prog.xml --set-version=&lt;vers&gt; --set-released=&lt;rel date&gt;
+    --archive-url=&lt;download url&gt; --archive-file=&lt;downloaded arch file&gt;
+    --archive-extract=&lt;extract dir&gt;
+</code></pre>
+<p>You should then be able to run your program with <code>0install run ./app.xml</code>.
+Set the interface url with <code>0publish --set-interface-uri=https://bambi.github.io/0install-feeds/app.xml</code>.
+And sign it: <code>0publish app.xml --xmlsign</code>.</p>
+<p>For an other release, repeat the process but use <code>--add-version</code> instead of <code>--set-version</code>.</p>
+<h2>Packaging With Template</h2>
+<p>Use 0template: <code>0install add 0template https://apps.0install.net/0install/0template.xml</code></p>
+<p>The point is to make a template for a feed which will be instantiated for each
+new release.</p>
+<p>Generate e new template: <code>0template myprog.xml.template</code></p>
+<p>Generate a new version: <code>0template myprog.xml.template version=1.0</code></p>

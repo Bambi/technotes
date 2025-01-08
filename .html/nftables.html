@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<title>nftables</title>
+<link rel="stylesheet" href="file:///home/as/.config/rucola/default_dark.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/go.min.js"></script>
+<script>hljs.highlightAll();</script>
+<h1>Nftables</h1>
+<p>iptables replacement.</p>
+<ul>
+<li>a table is a list of rules treated sequencially.
+Tables are used to separate rules for filtering/nat...</li>
+<li>a rule is an expression (a list of tests matching packet payload)
+and a statement (a list of action to perform when the expression matches).</li>
+<li>a chain is a list of rules (taken from a table) attached to a netfilter hook.</li>
+</ul>
+<p>Table family can be <code>ip</code> (IPv4 packets), <code>ip6</code> (IPv6 packets), <code>inet</code> (IPv4/IPv6 packets).</p>
+<p>Chains are not pre-configured and must be explicitly created. Hooks are
+<code>prerouting</code>, <code>input</code>, <code>forward</code>, <code>output</code>, <code>postrouting</code>, <code>ingress</code>.</p>
+<h2>Nft Usage</h2>
+<p>Nftables are managed with the <code>nft</code> tool.</p>
+<pre><code>  nft add table &lt;famlily&gt; &lt;name&gt;
+  nft list tables
+  nft delete table &lt;famlily&gt; &lt;name&gt;
+  nft flush table &lt;famlily&gt; &lt;name&gt;  // empty a table
+  nft list ruleset  // list whole set of tables, chains, etc
+</code></pre>
+<h1>References</h1>
+<p><a href="https://wiki.nftables.org/wiki-nftables/index.php/Main_Page">Nftables Wiki</a></p>

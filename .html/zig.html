@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<title>zig</title>
+<link rel="stylesheet" href="file:///home/as/.config/rucola/default_dark.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/go.min.js"></script>
+<script>hljs.highlightAll();</script>
+<h1>Zig Language</h1>
+<p>Excluded features:</p>
+<ul>
+<li>string type</li>
+<li>classes/inheritance/runtime polymorphism</li>
+<li>interfaces/protocols</li>
+<li>constructors/destructors/RAII (zig uses defer/errdefer keyword)</li>
+<li>function/operator overloading</li>
+<li>closures or lambdas</li>
+<li>garbage collection</li>
+<li>exceptions (zig uses error codes instead)</li>
+</ul>
+<p>Added features:</p>
+<ul>
+<li>Optional Values are first class citizen, replacing null pointers</li>
+<li>Errors as first class citizen algebraic types</li>
+<li>Structs as namespaces</li>
+<li>Compile time code execution replace macros</li>
+<li>Loops, labeled blocks, and if statements are expressions</li>
+<li>Slices</li>
+</ul>
+<p>Coding style: <code>camelCaseFunctionName</code>, <code>TitleCaseTypeName</code>, <code>snake_case_variable_name</code>.</p>
+<h2>Imports</h2>
+<p><code>@import</code> to import stdlib/files/etc and assign to a namespace:</p>
+<ul>
+<li><code>@import</code> is built-in function, evaluated at compile time.</li>
+<li>takes in a file, and gives you a struct type based on that file. All
+declarations labeled as <code>pub</code> will end up in result struct for use.</li>
+<li><code>@import(&quot;std&quot;)</code> is a special case in the compiler, and gives you access
+to the standard library. Other <code>@imports</code> will take in a file path, or a
+package name.</li>
+</ul>
+<pre><code class="language-zig">const std = @import(&quot;std&quot;);
+</code></pre>
+<h2>Variables</h2>
+<p>Defined with either <code>const</code> or <code>var</code> keyword. <code>const</code> declare a variable's value immutable.
+Variable shadowing is not allowed.</p>
+<pre><code class="language-zig">const x: i32 = 5
+</code></pre>
+<p>Type of the variable can be inferred from its initializer:</p>
+<pre><code class="language-zig">const x = 5
+</code></pre>
+<p>Every variable must be assigned a value while being declared. It is possible
+to assign the <code>undefined</code> value.
+Each declared variable must be used but it is possible to assign a varible
+to the thow-away variable <code>_</code>.</p>
+<p>Constants in the global scope are by default comptime values.</p>
+<p>Overflows are detectable illegal behaviour: use overflow operator if needed
+(<code>+%</code>, <code>-%</code>, <code>*%</code>, <code>+%=</code>, <code>-%=</code>, <code>*%=</code>).</p>
+<h2>Functions</h2>
+<p>Defined with the <code>fn</code> keyword. The <code>pub</code> keyword make it exportable from
+the current scope (for the main function for example).</p>
+<pre><code class="language-zig">pub fn main() void {}
+</code></pre>
+<p>It is not possible to ignore return values for function (use <code>_</code> if you need).
+All function arguments are immutable.</p>
+<h2>Built-in Functions</h2>
+<p>Prefixed by <code>@</code>.</p>
+<h2>Casting</h2>
+<ul>
+<li><code>@as</code> only allowed when the casting operation is unambiguous and safe.</li>
+<li><code>@truncate</code> explicitly cast to a smaller-size integer with the same signedness,
+by removing the most-significant bits.</li>
+<li><code>@bitCast</code> to cast between same sized types, preserving the bitpattern
+(between signed and unsigned).</li>
+<li><code>@intCast</code> for runtime safety-checked narrowing conversions.</li>
+</ul>
+<pre><code class="language-zig">var x = @as(u8, 5);     // type inference allows the compiler to determine that x is type u8
+var y = @as(i32, x);
+
+var x = @as(u16, 513);    // x in binary: 0000001000000001
+var y = @truncate(u8, x); // y in binary:         00000001
+
+var x = @as(u8, 180);     // x in binary: 10110100 (value is 180)
+var y = @bitCast(i8, x);  // y in binary: 10110100 (value is -76)
+
+var x = @as(i16, 180);
+var y = @intCast(u8, x); // this is fine
+var z = @intCast(i8, y); // this will crash
+</code></pre>
+<h2>Other</h2>
+<ul>
+<li><code>@This</code> returns the type of the inner most struct/enum/union.
+Used often with anonymous struct and/or generics.</li>
+</ul>
+<h2>Structs</h2>
+<p>Struct are declared by assigning them a name using the <code>const</code> keyword. Structs
+can have default values and can coerce into an other struct as long as the
+values can be figured out:</p>
+<pre><code class="language-zig">const Vec2 = struct{
+    x: f64,
+    y: f64,
+    z: f64 = 0.0
+};
+
+pub fn main() void {
+    var v = Vec2{.y = 1.0, .x = 2.0};
+    std.debug.print(&quot;v: {}\n&quot;, .{v});
+}
+</code></pre>
+<p>It is possible to drop functions into an struct to make it work like a
+OOP-style object.
+There is syntactic sugar where if you make the functions' first parameter
+be a pointer to the object.
+The typical convention is to make this obvious by calling the variable
+<code>self</code>.</p>
+<pre><code class="language-zig">const LikeAnObject = struct{
+    value: i32,
+
+    fn print(self: *LikeAnObject) void {
+        std.debug.print(&quot;value: {}\n&quot;, .{self.value});
+    }
+};
+
+pub fn main() void {
+    var obj = LikeAnObject{.value = 47};
+    obj.print(); // or
+    LikeAnObject.print(obj);
+}
+</code></pre>
+<p>The std.debug.print's second parameter is a tuple: it is an anonymous
+struct with numbered fields.
+Their fields can be accessed with their position number:</p>
+<pre><code class="language-zig">var x = .{&quot;foo&quot;, 34};
+std.debug.print(&quot;{}\n&quot;, .{x.@&quot;0&quot;});
+std.debug.print(&quot;{}\n&quot;, .{x.@&quot;1&quot;});
+std.debug.print(&quot;{}\n&quot;, .{x.@&quot;2&quot;}); // error: no member named '2' in struct...
+</code></pre>
+<h2>Unions</h2>
+<p>Union types do not have a guaranteed memory layout. They cannot be used
+to reinterpret memory. Accessing a field in a union which is not active is
+detectable illegal behavior.</p>
+<pre><code class="language-zig">const Payload = union {
+    int: i64,
+    float: f64,
+    bool: bool,
+};
+test &quot;simple union&quot; {
+    var payload = Payload{ .int = 1234 };
+    payload.float = 12.34; // error =&gt; test &quot;simple union&quot;...access of inactive union field
+}
+</code></pre>
+<h2>Enums</h2>
+<p>Defined with the <code>enum</code> keyword.</p>
+<ul>
+<li>In some cases you can shortcut the name of the enum.</li>
+<li>You can set the value of an enum to an integer, but it does not automatically coerce,
+you have to use <code>@enumToInt</code> or <code>@intToEnum</code> to do conversions.</li>
+</ul>
+<pre><code class="language-zig">const EnumType = enum{
+    EnumOne,
+    EnumTwo,
+    EnumThree = 3
+};
+
+pub fn main() void {
+    std.debug.print(&quot;One: {}\n&quot;, .{EnumType.EnumOne});
+    std.debug.print(&quot;Two?: {}\n&quot;, .{EnumType.EnumTwo == .EnumTwo});
+    std.debug.print(&quot;Three?: {}\n&quot;, .{@enumToInt(EnumType.EnumThree) == 3});
+}
+</code></pre>
+<h2>Tagged Unions</h2>
+<p>Tagged unions are unions which use an enum used to detect which field is
+active. Here we make use of a switch with payload capturing; captured values
+are immutable so pointers must be taken to mutate the values:</p>
+<pre><code class="language-zig">const Tag = enum { a, b, c };
+
+const Tagged = union(Tag) { a: u8, b: f32, c: bool };
+
+test &quot;switch on tagged union&quot; {
+    var value = Tagged{ .b = 1.5 };
+    switch (value) {
+        .a =&gt; |*byte| byte.* += 1,
+        .b =&gt; |*float| float.* *= 2,
+        .c =&gt; |*b| b.* = !b.*,
+    }
+    expect(value.b == 3);
+}
+</code></pre>
+<p>The tag type of a tagged union can also be inferred. Shorthand for above:</p>
+<pre><code class="language-zig">const Tagged = union(enum) { a: u8, b: f32, c: bool };
+</code></pre>
+<p><code>void</code> member types can have their type omitted from the syntax. Here,
+none is of type <code>void</code>:</p>
+<pre><code class="language-zig">const Tagged2 = union(enum) { a: u8, b: f32, c: bool, none };
+</code></pre>
+<h2>Arrays &amp; Slices</h2>
+<p>An Array is a contiguous memory with comptime known length. Its length
+is accessible with the <code>len</code> field of the array.
+Arrays are zero-indexed.</p>
+<pre><code class="language-zig">var array: [3]u32 = [3]u32{47, 47, 47};
+// also valid:
+// var array = [_]u32{47, 47, 47};
+
+var invalid = array[4]; // error: index 4 outside array of size 3.
+std.debug.print(&quot;array[0]: {}\n&quot;, .{array[0]});
+std.debug.print(&quot;length: {}\n&quot;, .{array.len});
+</code></pre>
+<p>A slice is run-time known length. They are constructed from arrays or other
+slices with the slicing operation.
+Note: the interval parameter in slicing operation is open (non-inclusive)
+on the big end.
+Attempting to access beyond the range of the slice is a runtime panic.</p>
+<pre><code class="language-zig">var array: [3]u32 = [_]u32{47, 47, 47};
+var slice: []u32 = array[0..2];
+// also valid:
+// var slice = array[0..2];
+
+var invalid = slice[3]; // panic: index out of bounds
+
+std.debug.print(&quot;slice[0]: {}\n&quot;, .{slice[0]});
+std.debug.print(&quot;length: {}\n&quot;, .{slice.len});
+</code></pre>
+<h2>Strings</h2>
+<p>Strings literals are null-terminated utf8 encoded arrays of <code>const u8</code> bytes.</p>
+<ul>
+<li>length does not include the null terminator</li>
+<li>indices are by byte</li>
+</ul>
+<pre><code class="language-zig">const string = &quot;hello 世界&quot;;
+const world = &quot;world&quot;;
+var slice: []const u8 = string[0..5];
+
+std.debug.print(&quot;string {}\n&quot;, .{string});
+std.debug.print(&quot;length {}\n&quot;, .{world.len});
+std.debug.print(&quot;null {}\n&quot;, .{world[5]});
+std.debug.print(&quot;slice {}\n&quot;, .{slice});
+std.debug.print(&quot;huh? {}\n&quot;, .{string[0..7]});
+</code></pre>
+<p>Const arrays can be coerced into const slices:</p>
+<pre><code class="language-zig">fn foo() []const u8 {  // note function returns a slice
+    return &quot;foo&quot;;      // but this is a const array.
+}
+</code></pre>
+<h2>Control Structures</h2>
+<p>If / switch / For statements are also expressions.</p>
+<h3>If</h3>
+<pre><code class="language-zig">if (v &lt; 0) {
+    return &quot;negative&quot;;
+} else {
+    return &quot;non-negative&quot;;
+}
+</code></pre>
+<p>As an expression: <code>x += if (a) 1 else 2;</code></p>
+<h3>Switch</h3>
+<pre><code class="language-zig">var x: i8 = 10;
+switch (x) {
+    -1...1 =&gt; {
+        x = -x;
+    },
+    10, 100 =&gt; {
+        //special considerations must be made
+        //when dividing signed integers
+        x = @divExact(x, 10);
+    },
+    else =&gt; {},
+}
+</code></pre>
+<h3>For</h3>
+<p>For loop that works only on arrays and slices:</p>
+<pre><code class="language-zig">var array = [_]i32{47, 48, 49};
+
+for (array) | value | {
+    std.debug.print(&quot;array {}\n&quot;, .{value});
+}
+for (array) | value, index | {
+    std.debug.print(&quot;array {}:{}\n&quot;, .{index, value});
+}
+</code></pre>
+<p>While loops for general purpose iteration
+(first block is evaluated at the beginning of the loop and the second block is evaluated at the end of the loop):</p>
+<pre><code class="language-zig">while (i &lt; x) : (i += 1) { ... }
+</code></pre>
+<h2>Error Handling</h2>
+<p>Errors are special union types, you denote that a function can error by
+prepending <code>!</code> to the front.
+You throw the error by simply returning it as if it were a normal return.</p>
+<p>If you write a function that can error, you must decide what to do with it
+when it returns.
+Two common options are <code>try</code> which simply forwards the error to be the error
+for the function and <code>catch</code> explicitly handles the error.</p>
+<pre><code class="language-zig">const MyError = error{
+    GenericError
+};
+
+fn foo(v: i32) !i32 {
+    if (v == 42) return MyError.GenericError;
+    return v;
+}
+
+pub fn main() !void {
+    // catch traps and handles errors bubbling up
+    _ = foo(42) catch |err| {
+        std.debug.print(&quot;error: {}\n&quot;, .{err});
+    };
+
+    // try won't get activated here.
+    std.debug.print(&quot;foo: {}\n&quot;, .{try foo(47)});
+
+    // this will ultimately cause main to print an error trace and return nonzero
+    _ = try foo(42);
+}
+</code></pre>
+<p>You can also use if to check for errors:</p>
+<pre><code class="language-zig">// note that it is safe for wrap_foo to not have an error ! because
+// we handle ALL cases and don't return errors.
+fn wrap_foo(v: i32) void {    
+    if (foo(v)) | value | {
+        std.debug.print(&quot;value: {}\n&quot;, .{value});
+    } else | err | {
+        std.debug.print(&quot;error: {}\n&quot;, .{err});
+    }
+}
+</code></pre>
+<h2>Defer</h2>
+<p>Allow statement to execute on lexical scope exit. Multiple defers get executed
+in reverse order.</p>
+<pre><code class="language-zig">var x: i16 = 5;
+{
+    defer x += 2;
+    expect(x == 5);
+}
+expect(x == 7);
+</code></pre>
+<p>There is also <code>errdefer</code> which are executed only when the function returns an
+error.
+Defer is used to free dynamically allocated memory or deinit ressources.</p>
+<h2>Pointers</h2>
+<p>Declared by prepending <code>*</code> to the front of the type.
+They are dereferenced, with the <code>.*</code> field.
+Pointers need to be aligned correctly with the alignment of the value it's
+pointing to.</p>
+<pre><code class="language-zig">pub fn printer(value: *i32) void {
+    std.debug.print(&quot;pointer: {}\n&quot;, .{value});
+    std.debug.print(&quot;value: {}\n&quot;, .{value.*});
+}
+
+pub fn main() void {
+    var value: i32 = 47;
+    printer(&amp;value);
+}
+</code></pre>
+<p>For structs, similar to Java, you can dereference the pointer and get the
+field in one shot with the <code>.</code> operator.
+Note this only works with one level of indirection, so if you have a pointer
+to a pointer, you must dereference the outer pointer first.</p>
+<pre><code class="language-zig">const MyStruct = struct {
+    value: i32
+};
+
+pub fn printer(s: *MyStruct) void {
+    std.debug.print(&quot;value: {}\n&quot;, .{s.value});
+}
+
+pub fn main() void {
+    var value = MyStruct{.value = 47};
+    printer(&amp;value);
+}
+</code></pre>
+<p>Zig allows any type (not just pointers) to be nullable, but note that they
+are unions of the base type and the special value <code>null</code>. To access the
+unwrapped optional type, use the <code>.?</code> field:</p>
+<pre><code class="language-zig">var value: i32 = 47;
+var vptr: ?*i32 = &amp;value;
+var throwaway1: ?*i32 = null;
+var throwaway2: *i32 = null; // error: expected type '*i32', found '(null)'
+
+std.debug.print(&quot;value: {}\n&quot;, .{vptr.*}); // error: attempt to dereference non-pointer type
+std.debug.print(&quot;value: {}\n&quot;, .{vptr.?.*});
+</code></pre>
+<p>Note: when you use pointers from C ABI functions they are automatically
+converted to nullable pointers.</p>
+<p>Another way of obtaining the unwrapped optional pointer is with the <code>if</code>
+statement:</p>
+<pre><code class="language-zig">fn nullChoice(value: ?*i32) void {
+    if (value) | v | {
+        std.debug.print(&quot;value: {}\n&quot;, .{v.*});
+    } else {
+        std.debug.print(&quot;null!\n&quot;, .{});
+    }
+}
+
+var value: i32 = 47;
+var vptr1: ?*i32 = &amp;value;
+var vptr2: ?*i32 = null;
+
+nullChoice(vptr1);
+nullChoice(vptr2);
+</code></pre>
+<h1>Zig New Concepts</h1>
+<h2>Optional Values</h2>
+<p>Optionnal types are declared <code>?T</code>. It means that the type can be either of
+type <code>T</code> or <code>null</code>.</p>
+<p>In Zig you cannot do anything with a pointer that is potentially null. You
+have to unwrap it before Zig lets you do anything with it.
+One way is using <code>orelse</code>:</p>
+<pre><code class="language-zig">const first = list.first orelse return null;
+</code></pre>
+<p>If <code>list.first</code> contains a <code>null</code> then <code>return null</code> will be executed.
+A number of control flow statements in Zig has this form to deal with optionals:</p>
+<pre><code class="language-zig">if (optional) |value| {}
+while (optional) |value| {}
+for (optional_elements) |value| {}
+</code></pre>
+<p>The <code>|value|</code> part unwraps an optional within the conditional. So e.g. this
+gives the opportunity to easily use <code>while</code> with an iterator. The code block is
+only repeated each time it is possible to unwrap and optional. Thus as soon
+as the <code>next()</code> function inside while-loop returns a <code>null</code> the iteration stops.</p>
+<h2>Labelled Blocks</h2>
+<p>Blocks in Zig are expressions and can be given labels, which are used to
+yield values. Blocks yield values, meaning that they can be used in place
+of a value. The value of an empty block <code>{}</code> is a value of the type <code>void</code>.</p>
+<pre><code class="language-zig">const count = blk: {
+    var sum: u32 = 0;
+    var i: u32 = 0;
+    while (i &lt; 10) : (i += 1) sum += i;
+    break :blk sum;
+};
+expect(count == 45);
+</code></pre>
+<p>Loops can be given labels, allowing you to <code>break</code> and <code>continue</code> to outer loops:</p>
+<pre><code class="language-zig">var count: usize = 0;
+  outer: for ([_]i32{ 1, 2, 3, 4, 5, 6, 7, 8 }) |_| {
+    for ([_]i32{ 1, 2, 3, 4, 5 }) |_| {
+      count += 1;
+      continue :outer;
+    }
+  }
+  expect(count == 8);
+</code></pre>
+<p>Loops can be expressions. Like <code>return</code>, <code>break</code> accepts a value. This can be
+used to yield a value from a loop. Loops in Zig also have an else branch on
+loops, which is evaluated when the loop is not exited from with a <code>break</code>:</p>
+<pre><code class="language-zig">return while (i &lt; end) : (i += 1) {
+    if (i == number) {
+      break true;
+    }
+  } else false;
+</code></pre>
+<h1>Metaprogramming</h1>
+<p>Zig's metaprogramming is driven by a few basic concepts:</p>
+<ul>
+<li>types are valid values at compile-time.</li>
+<li>most runtime code will also work at compile-time.</li>
+<li>struct field evaluation is compile-time duck-typed.</li>
+<li>the zig standard library gives you tools to perform compile-time reflection.</li>
+</ul>
+<h2>Comptime Function Call</h2>
+<pre><code class="language-zig">fn multiply(a: i64, b: i64) i64 {
+    return a * b;
+}
+
+pub fn main() void {
+    const len = comptime multiply(4, 5);
+    const my_static_array: [len]u8 = undefined;
+}
+</code></pre>
+<p>Note how the function definition doesn’t have any attribute that states
+it must be available at compile-time. It’s just a normal function, and we
+request its compile-time execution at the call site.</p>
+<p>But if a function parameter is comptime then the function is always comptime.</p>
+<pre><code class="language-zig">fn insensitive_eql(comptime uppr: []const u8, str: []const u8) bool {}
+</code></pre>
+<p>It is also possible to add comptime block with <code>comptime {...}</code> to make the
+equivalent of <code>Static_assert</code> in C.</p>
+<h2>Generic Structs</h2>
+<p>To create a generic struct, all you have to do is create a function that
+takes a type argument and return a new struct definition.</p>
+<pre><code class="language-zig">fn Vec2Of(comptime T: type) type {
+    return struct{
+        x: T,
+        y: T
+    };
+}
+
+const V2i64 = Vec2Of(i64);
+var vi = V2i64{.x = 47, .y = 47};
+</code></pre>
+<p>The function returns a type, which means it can only be called at <code>comptime</code>.</p>
+<h2>Generic Functions</h2>
+<p>Made with the <code>comptime</code> argument. This function can be used with any kind of
+slice:</p>
+<pre><code class="language-zig">/// Compares two slices and returns whether they are equal.
+pub fn eql(comptime T: type, a: []const T, b: []const T) bool {
+    if (a.len != b.len) return false;
+    for (a) |item, index| {
+        if (b[index] != item) return false;
+    }
+    return true;
+}
+</code></pre>
+<h2>C Interface</h2>
+<h3>Types</h3>
+<ul>
+<li><code>[]const u8</code>: Zig string, an array (length knowed at comptime) of <code>u8</code>. No sentinel.</li>
+<li><code>[:0]const u8</code>: slice of <code>u8</code> (length knowed at runtime).</li>
+<li><code>[*:0]const u8</code>: pointer to a zone of unknowed size, ending with <code>0</code>.</li>
+<li><code>[*c]const u8</code>: c string, ending with <code>0</code>.</li>
+</ul>
+<p>The first 2 types are Zig types while the latter 2 types are c types. To convert between
+them a cast is not enough: the Zig type need to know the length of the memory zones.</p>
+<p>The function <code>std.mem.span(ctype)</code> convert a ctype pointer (endind with a sentinel) to
+a Zig array/slice (with a length).
+See <a href="https://stackoverflow.com/questions/72736997/how-to-pass-a-c-string-into-a-zig-function-expecting-a-zig-string?rq=1">Pass a C string into a Zig function</a></p>
+<h1>Zig Build</h1>
+<p>Zig build scripts (usually named <code>build.zig</code>) are ordinary Zig programs with
+a special exported function (<code>pub fn build(b: *std.build.Builder) void</code>)
+utilizing <code>std.build.Builder</code>.
+The build runner is invoked by <code>zig build</code> which in turn invokes <code>build.zig:build()</code>.</p>
+<p>This will create DAG of <code>std.build.Step</code> nodes where each <code>Step</code>
+executes a part of our build process. Each step has a set of dependencies
+that need to be made before the step itself is made. A step is created with
+<code>Builder.step</code>:</p>
+<pre><code class="language-zig">pub fn build(b: *std.build.Builder) void {
+    const named_step = b.step(&quot;step-name&quot;, &quot;This is what is shown in help&quot;);
+}
+</code></pre>
+<p>User can invoke named steps by calling <code>zig build step-name</code> or predefined
+steps (e.g. <code>install</code>).</p>
+<h2>Compiling Executables</h2>
+<p>Builder exposes <code>Builder.addExecutable</code> which will create a new <code>LibExeObjStep</code>.</p>
+<pre><code class="language-zig">pub fn build(b: *std.build.Builder) void {
+    const exe = b.addExecutable(&quot;fresh&quot;, &quot;src/main.zig&quot;);
+
+    const target = b.standardTargetOptions(.{});
+    exe.setTarget(target);
+
+    const mode = b.standardReleaseOptions();
+    exe.setBuildMode(mode);
+
+    // will create a 'zig compile' command, same as 'zig build'
+    const compile_step = b.step(&quot;compile&quot;, &quot;Compiles src/main.zig&quot;);
+    compile_step.dependOn(&amp;exe.step);
+}
+</code></pre>
+<h2>Cross Compilation</h2>
+<p>Cross compilation is enabled by setting the target and build mode of our program:</p>
+<ul>
+<li><code>exe.setBuildMode(.ReleaseSafe);</code> will pass <code>-O ReleaseSafe</code> to the build invocation.</li>
+<li><code>exe.setTarget(...);</code> will set what <code>-target ...</code> will see.</li>
+<li><code>Builder.standardReleaseOptions</code>/<code>Builder.standardTargetOptions</code>: convenience
+functions to make both the build mode and the target available as a command
+line option.</li>
+</ul>
+<p>Invoke <code>zig build --help</code> to see command line options added by
+<code>standardTargetOptions</code> (first two) and <code>standardReleaseOptions</code> (rest)</p>
+<pre><code>zig build -Dtarget=x86_64-windows-gnu -Dcpu=athlon_fx
+zig build -Drelease-safe=true
+zig build -Drelease-small
+</code></pre>
+<h2>Installing Artifacts</h2>
+<p>Installation involves making a step on the install step of the Builder:</p>
+<ul>
+<li>the <code>install</code> is step always created and accessed via <code>Builder.getInstallStep()</code></li>
+<li><code>InstallArtifactStep</code> is build step responsible for copying exe artifact to
+install directory.</li>
+</ul>
+<pre><code class="language-zig">pub fn build(b: *std.build.Builder) void {
+    const exe = b.addExecutable(&quot;fresh&quot;, &quot;src/main.zig&quot;);
+
+    const install_exe = b.addInstallArtifact(exe);
+    b.getInstallStep().dependOn(&amp;install_exe.step);
+}
+</code></pre>
+<p>This will now do several things:</p>
+<ul>
+<li><code>b.addInstallArtifact</code> creates a new <code>InstallArtifactStep</code> that copies
+the compilation result of <code>exe</code> to <code>$prefix/bin</code> (usually zig-out)</li>
+<li><code>InstallArtifactStep</code> (implicitly) depends on <code>exe</code> so will build exe as well</li>
+<li>invoke by <code>zig build install</code> (or <code>just zig build</code> for short)</li>
+<li>the <code>InstallArtifactStep</code> registers the output file for <code>exe</code> in a list
+that allows uninstalling it again</li>
+<li>uninstall the artifact (but not directories!) by invoking <code>zig build uninstall</code></li>
+</ul>
+<h1>Receipes</h1>
+<ul>
+<li><a href="https://zig.news/pyrolistical/how-to-escape-python-and-write-more-zig-228m">Calling Zig code from Python</a></li>
+<li><a href="https://github.com/zigzap/zap">Project with C dependency/patching</a></li>
+</ul>
+<h2>References</h2>
+<ul>
+<li><a href="https://gist.github.com/ityonemo/769532c2017ed9143f3571e5ac104e50">Zig in 30 minutes</a></li>
+<li><a href="https://ikrima.dev/dev-notes/zig/zig-crash-course/">Zig Crash Course</a></li>
+<li><a href="https://ziglang.org/documentation/0.10.1/">Zig Language Reference</a></li>
+<li><a href="https://ziglang.org/learn/samples/">Zig Code Examples</a></li>
+<li><a href="https://renato.athaydes.com/posts/testing-building-c-with-zig.html">Testing and building C projects with Zig</a></li>
+<li><a href="https://ruoyusun.com/2022/02/27/zig-cc.html">Using Zig As Cross Platform C Toolchain</a></li>
+<li><a href="https://www.openmymind.net/">Dev Blog</a></li>
+<li><a href="https://github.com/sayden/zig-snippets">Zig Snippets</a></li>
+<li><a href="https://dev.to/crinklywrappr/zig-notes-378m">Zig Notes</a></li>
+<li><a href="https://www.trackawesomelist.com/catdevnull/awesome-zig/readme/">Awesome Zig</a></li>
+<li><a href="https://codeberg.org/john-nanney/zig_writecc">Build Compile Commands with Zig</a></li>
+<li><a href="https://zig.news/kristoff/extend-a-c-c-project-with-zig-55di">Extend a C/C++ Project with Zig</a></li>
+<li><a href="https://renato.athaydes.com/posts/testing-building-c-with-zig.html">Testing and building C projects with Zig</a></li>
+<li><a href="https://dev.to/dannypsnl/interaction-with-c-in-zig-540c">Interaction with C in Zig</a></li>
+<li><a href="https://zig.news/edyu/zig-package-manager-wtf-is-zon-558e">Zig Package Manager -- WTF is Zon</a></li>
+</ul>

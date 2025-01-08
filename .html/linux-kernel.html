@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<title>linux-kernel</title>
+<link rel="stylesheet" href="file:///home/as/.config/rucola/default_dark.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/go.min.js"></script>
+<script>hljs.highlightAll();</script>
+<h1>Linux Kernel</h1>
+<h2>Architecture</h2>
+<h3>Tasklets</h3>
+<p>Tasklets are implemented on top of softirq: <code>HI_SOFTIRQ</code> and <code>TASKLET_SOFTIRQ</code>.
+When a tasklet is scheduled the kernel raise one of theses softirqs. Theses softirqs
+are handled a special function that run any scheduled tasklet. Theses function ensure
+that only one tasklet of a given type is running at the same time.</p>
+<p>Tasklets can be declared either:</p>
+<ul>
+<li>statically: with the <code>DECLARE_TASKLET</code> macro.</li>
+<li>dynamically: with the <code>tasklet_int()</code> functions.</li>
+</ul>
+<p>Tasklets cannot sleep and run with all insterrups enabled: take precautions if you
+share data with an interrupt handler.</p>
+<p>A tasklet is scheduled with <code>tasklet_schedule()</code> and run in the near future. If a
+tasket is scheduled again before it has a chance to run, it still runs once.</p>
+<h3>Ksoftirqd</h3>
+<p>Set of per-processor kernel threads that help in the processing of softirqs when the
+system is overwhelmed. Theses threads run with the lowest priority (nice value of 19)
+and process reactivated softirqs.</p>
+<h3>Work Queues</h3>
+<p>Defer work into a kernel thread: run in process context and may sleep (allocate memory,
+perform I/O).
+Theses kernel threads are called worker threads and work thread are named <code>event/n</code>
+(n: cpu number). It is also possible to create specific worker threads.</p>
+<h2>Oops Decoding</h2>
+<p>See <a href="https://www.opensourceforu.com/2011/01/understanding-a-kernel-oops/">Understanding a Kernel Oops!</a></p>
+<p>Make sure your module have debug symbols. If it is not the case make sure that:</p>
+<ul>
+<li>CONFIG_DEBUG_INFO is set in your kernel config</li>
+<li>module is correctly compiled (<a href="https://stackoverflow.com/questions/12589605/debug-info-for-loadable-kernel-modules">see</a>)</li>
+</ul>
+<p>Oops gives information about crash location (RIP). In particular RIP will gives
+you the crash location in the form of <code>&lt;fct+addr&gt;/xxxx [&lt;module&gt;]</code>.</p>
+<p>Load the kernel module into gdb: <code>gdb module.ko</code>.
+Get module load address with: <code>cat /sys/module/&lt;module&gt;/sections/.init.text</code>.
+Load symbol file into the debugger: <code>add-symbol-file &lt;module&gt;.o &lt;load addr&gt;</code>.
+You can now disassemble the function and see where the crash occurs: <code>disassemble &lt;fct&gt;</code>.</p>
+<p>To get the corresponding crash location in the source code:
+Compute the exact crash address: add the function address (the first address you
+get when you disassemble the function) to the address given by the RIP register
+(in hexadecimal notation).
+You can get the exact line number of the crash in the source code with: <code>list *&lt;crash addr&gt;</code>.</p>
+<p>A simpler way is to load your module under gdb: <code>gdb &lt;module&gt;.ko</code>
+and then get line number directly with : <code>list *(&lt;fct+addr&gt;)</code></p>
+<h2>Crash Dump on Panic</h2>
+<p>It is possible to get a memory dump of a linux kernel for post-mortem analysis.
+Depending on the situation (from a VM or hardware) it can be done:</p>
+<ul>
+<li>automatically when a panic occurs</li>
+<li>at user request</li>
+</ul>
+<h3>Generating a Crash Dump Manually</h3>
+<p>This can be done on a running kernel under KVM with <code>virsh dump &lt;domain&gt; --memory-only</code>.
+If you want to catch a panic you should set the kernel parameter <code>panic=0</code>
+(wait forever after a panic allowing you to get a crash dump before rebooting the kernel)
+with either the commandline or the sysctl.conf file.
+To reboot your VM: <code>virsh send-key &lt;domain&gt; KEY_LEFTALT KEY_SYSRQ KEY_B</code>
+(need <a href="https://linuxaria.com/howto/sysrq-linux-ubuntu">SysRq</a>).</p>
+<h3>Getting a Crash Dump Automatically</h3>
+<p>Need <code>pvpanic</code> and <code>kexec</code>.
+<a href="https://blogs.oracle.com/linux/post/an-introduction-to-pvpanic">An introduction to pvpanic</a>
+<a href="https://www.kernel.org/doc/html/latest/admin-guide/kdump/kdump.html">Documentation for Kdump</a>
+<a href="https://www.linuxjournal.com/content/oops-debugging-kernel-panics-0">Oops! Debugging Kernel Panics</a></p>
+<p>You kernel need:</p>
+<ul>
+<li>CONFIG_PVPANIC</li>
+<li>CONFIG_KEXEC</li>
+<li>CONFIG_CRASH_DUMP</li>
+<li>CONFIG_SYSFS</li>
+<li>CONFIG_DEBUG_INFO</li>
+<li>CONFIG_RELOCATBLE</li>
+</ul>
+<h3>Crash Dump Analysis</h3>
+<p>Use the <code>crash</code> tool: <code>crash &lt;vmcore img&gt; &lt;vmlinux file path&gt;</code>.
+<a href="https://wiki.ubuntu.com/DebuggingKernelWithQEMU">DebuggingKernelWithQEMU</a>
+<a href="https://lingfenghsiang.github.io/2021/08/22/post/">How to debug linux kernel as if debugging a userland program</a>
+<a href="https://www.dedoimedo.com/computers/crash-analyze.html">Analyzing Linux kernel crash dumps with crash</a>
+<a href="https://www.lucasvr.gobolinux.org/etc/Debugging%20the%20kernel%20with%20Crash%20tool.pdf">Debugging the Linux kernel with the Crash Utility</a>
+Use CONFIG_FRAME_POINTERS to get a readable back trace.</p>
+<h2>LTTng</h2>
+<p>Trace framework for Linux kernel and user space.</p>
+<h3>Usage</h3>
+<p><code>lttng list -k</code>: list available events.</p>
+<p>Example lttng session:</p>
+<pre><code class="language-console">lttng-sessiond --daemonize --extra-kmod-probes=isw,ipanema,netchan
+lttng create my_session --output=/cache/lttng-traces/trace
+lttng enable-event -k 'isw_*','ipanema_*','netchan_*',skb_kfree,net_if_receive_skb
+lttng start / stop
+lttng destroy
+</code></pre>
+<p>Traces gathered between start/stop will be stored in the <code>/cache/lttnh-traces/trace</code> directory.
+To view traces: <code>babeltrace2 trace</code>.</p>
+<h3>Defining</h3>
+<p>LTTng use the TRACE framework (<code>ftrace</code>) from the kernel which is used by other trace toolkits.
+You need first to define your trace events with TRACE_EVENT():</p>
+<ul>
+<li>define a prototype of a function to record data in a ring buffer</li>
+<li>define the data to record in the ring-buffer</li>
+<li>define a function to produce human-readable ASCII from data in the ring-buffer</li>
+</ul>

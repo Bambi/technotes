@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<title>zero-tier</title>
+<link rel="stylesheet" href="file:///home/as/.config/rucola/default_dark.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/go.min.js"></script>
+<script>hljs.highlightAll();</script>
+<h1>Zero Tier</h1>
+<p>Secured meshed Wan overlay.</p>
+<h1>Usage</h1>
+<p>To join a network: <code>zerotier-cli join &lt;16-digit network ID&gt;</code>
+Use <code>zerotier-cli info</code> or <code>zerotier-cli status</code> to check connectivity.</p>
+<pre><code>zerotier-cli info -j
+zerotier-cli listpeers
+zerotier-cli peers   // easier to read than listpeers
+</code></pre>
+<h1>Troubleshoot</h1>
+<p><code>zerotier-cli status -j</code> gives lots of info. If <code>tcpFallbackActive</code> is true then
+there is relaying over TCP (slow).</p>
+<h2>References</h2>
+<p><a href="https://download.zerotier.com/RELEASES/">Zerotier Download</a>
+<a href="https://zerotier.atlassian.net/wiki/spaces/SD/pages/8454145/Getting+Started+with+ZeroTier">Getting Started with ZeroTier</a></p>

@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<title>shells</title>
+<link rel="stylesheet" href="file:///home/as/.config/rucola/default_dark.css">
+<h1>Shells Startup</h1>
+<p>An interactive shell reads commands from standard input. Non interactive shell
+read commands from a file.</p>
+<h2>Fish</h2>
+<h3>Init Sequence</h3>
+<p>Read by every fish shell in order (use <code>status --is-interactive</code> or <code>status --is-login</code> to distinguish):</p>
+<ul>
+<li><code>~/.config/fish/conf.d/*.fish</code></li>
+<li><code>/etc/fish/conf.d/*.fish</code></li>
+<li><code>/etc/fish/config.fish</code></li>
+<li><code>~/.config/fish/fish.conf</code></li>
+</ul>
+<h3>Variables</h3>
+<p>Fish variables can be:</p>
+<ul>
+<li>universal: variables shared by all instances of fish shell even after reboot
+(they are stored in the <code>~/.config/fish/fish_variables</code> file). <code>set -U</code></li>
+<li>global: specific to the current fish process (and not local to a block of fish code).
+<code>set -g</code></li>
+<li>environment variables are stored in the environment (exported to child processes).
+Universal variable can also be exported variable. <code>set -x</code></li>
+</ul>
+<h2>Bash</h2>
+<h3>Init Sequence</h3>
+<p>For interactive login shells in order (launched with <code>--login</code>):</p>
+<ul>
+<li><code>/etc/profile</code></li>
+<li><code>~/.bash_profile</code> (usualy have the line <code>if [ -f ~/.bashrc ]; then . ~/.bashrc; fi</code>)</li>
+<li><code>~/.bash_login</code></li>
+<li><code>~/.profile</code></li>
+</ul>
+<p>For interactive non-login shells in order:</p>
+<ul>
+<li><code>~/.bashrc</code></li>
+</ul>
+<p>For non-interactive shells:</p>
+<ul>
+<li>look for <code>$BASH_ENV</code> variable and do something like <code>if [ -n &quot;$BASH_ENV&quot; ]; then . &quot;$BASH_ENV&quot;; fi</code></li>
+</ul>
+<h2>Zsh</h2>
+<h3>Init Sequence</h3>
+<p>In order:</p>
+<ul>
+<li><code>~/.zshenv</code> unless <code>-f</code> is used</li>
+<li><code>~/.zprofile</code> for login shells (better use <code>~/.zlogin</code>)</li>
+<li><code>~/.zshrc</code> for interactive shells</li>
+<li><code>~/.zlogin</code> for login shells</li>
+</ul>
+<h2>Sharing Environment Between Shells</h2>
+<p>Purpose: be able to use either shell as will.
+Use a <code>~/.env</code> file to set environment variables with a simple (<code>dash</code>) syntax.
+Make this file read by Bash.
+For Fish use <code>replay</code> to load environment.
+This file should be read only once, at login shell or before (<code>~/.xsessionrc</code>, <code>~/.pam_environment</code>).
+See also <a href="https://unix.stackexchange.com/questions/281858/difference-between-xinitrc-xsession-and-xsessionrc">xsessions</a>
+and <a href="https://wiki.debian.org/EnvironmentVariables">Environment Variables</a>.</p>

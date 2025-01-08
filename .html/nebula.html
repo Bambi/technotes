@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<title>nebula</title>
+<link rel="stylesheet" href="file:///home/as/.config/rucola/default_dark.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/go.min.js"></script>
+<script>hljs.highlightAll();</script>
+<h1>Nebula Overlay</h1>
+<h2>Configuration</h2>
+<h3>Certificates</h3>
+<p>All nebula nodes must have a certificate. A CA certificate is also required
+to sign all other certificates.
+Certificates files are:</p>
+<ul>
+<li><code>*.crt</code>: certificated data + public key</li>
+<li><code>*.key</code>: private key</li>
+</ul>
+<p>Each node must have:</p>
+<ul>
+<li>its certificated identity: a secret key (<code>.key</code>) and a certificate signed with
+the ca private key (<code>.crt</code>).</li>
+<li>the nebula certificate (<code>.crt</code>) which is the public key of the CA.</li>
+</ul>
+<h3>Creating a CA Certificate</h3>
+<p>This cert (key pair) will be used to issue other certificates. Keep the private key (.key) safe!
+Create it with <code>nebula-cert ca --name &lt;CA name&gt;</code>.</p>
+<h3>Creating Node Certificates</h3>
+<p>Every nodes connecting to the overlay must have a specific cert created with
+<code>nebula-cert sign -name &lt;node name&gt; -ip '42.69.16.5/24' [--groups &lt;group,group,...&gt;]</code>.
+Each cert contains:</p>
+<ul>
+<li>the ip address of the node</li>
+<li>the name of the node (can be whatever you want or a FQDN)</li>
+<li>all the groups the node is a menber of</li>
+</ul>
+<p>If the name is a FQDN the nebula lighthouse can serve that name over DNS
+and you can delegate to it as an NS record.</p>
+<h3>Extend Access Beyong Overlay Hosts</h3>
+<p>See <a href="https://nebula.defined.net/docs/guides/unsafe_routes/">Extend network access beyond overlay hosts</a>.</p>
+<p>Overall procedure:</p>
+<ul>
+<li>On the host where the subnet exist: you must generate a certificate with the
+<code>subnet</code> option.</li>
+<li>On hosts need access to the subnet: you must modify the config.yml file and
+add the subnet under the <code>unsafe_routes</code> standza.</li>
+</ul>
+<h3>DNS</h3>
+<p>The lighthouse can also be a DNS server.
+You retreive your cert from the lighthouse with a DNS request (TXT record):
+<code>dig @&lt;lighthouse addr&gt; &lt;your ip addr&gt; txt</code></p>
+<h2>Running</h2>
+<p>Nebula can run with its own user but the exe need capabilities
+(to create tun device and to bind to port 53) that can be set with:</p>
+<p><code>sudo setcap cap_net_bind_service,cap_net_admin=ep ~/.local/bin/nebula</code>.</p>
+<h2>Running as a Service</h2>
+<p>You can use this systemd service file (<code>/etc/systemd/system/nebula.service</code>):</p>
+<pre><code>[Unit]
+Description=Nebula overlay networking tool
+Wants=basic.target network-online.target nss-lookup.target time-sync.target
+After=basic.target network.target network-online.target
+Before=sshd.service
+
+[Service]
+SyslogIdentifier=nebula
+ExecReload=/bin/kill -HUP $MAINPID
+ExecStart=/usr/local/bin/nebula -config /etc/nebula/config.yml
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+</code></pre>
+<p>and start it with:</p>
+<pre><code>#Reload the daemon files
+systemctl daemon-reload
+#Start and enable the service
+systemctl enable --now nebula
+</code></pre>
+<p>Nebula should run under its own user created with:</p>
+<pre><code>sudo addgroup nebula
+sudo adduser --home /nonexistent --no-create-home --disabled-password --disabled-login --ingroup nebula nebula
+</code></pre>
+<h3>Configuration Update</h3>
+<p>Modifications of the configuration file are not loaded automatically.
+You can either restart the nebula service or send the HUP signal:
+<code>killall -HUP nebula</code>.</p>
+<h2>Phone Configuration</h2>
+<ol>
+<li>Generate a public key on your phone with the nebula app.</li>
+<li>Get that key to your computer (with sharing).</li>
+<li>Generate this public key on your computer with your CA key:
+<code>nebula-cert sign -in-pub phone.pub -name &lt;name&gt; -ip &lt;ip&gt;</code>.
+you will get a <code>phone.crt</code> file.</li>
+<li>Send file <code>phone.crt</code> to your phone.</li>
+<li>Copy the file content in the <code>Certificate PEM Contents</code> box.</li>
+<li>Copy to your phone the CA public key (CA.crt).</li>
+<li>Copy the file content in the <code>CA PEM Contents</code> box.</li>
+<li>Set the lighthouse ip addresses.</li>
+</ol>
+<h2>References</h2>
+<p><a href="https://www.apalrd.net/posts/2023/network_nebula/">Building a Secure Internal Network with Nebula</a></p>

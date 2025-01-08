@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<title>python</title>
+<link rel="stylesheet" href="file:///home/as/.config/rucola/default_dark.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/go.min.js"></script>
+<script>hljs.highlightAll();</script>
+<h1>Python</h1>
+<h2>Data Types</h2>
+<h3>Strings</h3>
+<p>8-bit string and unicode strings are different types in Python.
+Prefix string constants with <code>'u'</code> to have unicode strings: <code>u'string'</code>.
+As an <a href="http://sametmax.com/lencoding-en-python-une-bonne-fois-pour-toute/">alternative</a>,
+use unicode strings directly in your code: make sure that code source files are encoded
+in utf-8 and add at the beginning of your files:</p>
+<pre><code class="language-python"># coding: utf-8
+from __future__ import unicode_literals
+</code></pre>
+<h3>Lists</h3>
+<p>List of mutable homogeneous (usually) elements accessed by sequential iteration.
+Elements can be duplicated in a list.</p>
+<p>List are created by enumeration of its elements between []:</p>
+<pre><code class="language-python">l = [ 'val1', 'val2', 'valx' ]
+</code></pre>
+<p>Functions available on lists are:
+<code>append, extend, insert, remove, pop, clear, index, count, sort, reverse, copy, del</code>.</p>
+<p>Lists can be used for stacks (with append and pop) and queues (with <code>append</code>, <code>deque</code> and <code>popleft</code>).</p>
+<p>Lists are used to make arrays. In a list (or array) elements are zero-indexed (index start at 0).
+Individual elements are accessed using its index between <code>[]</code>.</p>
+<p>To get all elements of a list with its index use the <code>enumerate()</code> function:</p>
+<pre><code class="language-python">for idx,val in enumerate(list):
+	print (idx, val)
+</code></pre>
+<h3>Tuples</h3>
+<p>List of immutable heterogeneous elements accessed via unpacking or indexing (or by name for named tuples).</p>
+<p>Tuples are created by enumerating its elements separated by commas (optionally between <code>()</code>):</p>
+<pre><code class="language-python">t = ( 'val1', val2, 3 ) or
+t = 'val1', val2, 3
+</code></pre>
+<h3>Sets</h3>
+<p>Unordered collection with no duplicates. Used for membership testing and
+eliminating duplicates and doing mathematical operations on sets.</p>
+<p>Use <code>{}</code> or the <code>set()</code> function to create sets:</p>
+<pre><code class="language-python">s = { 'val1', 'val2', 'val3' }  or
+s = set( 'val1', 'val2', 'val3' )
+s = set() # creates an empty set
+</code></pre>
+<h3>Dictionaries</h3>
+<p>List of keys-values. Dictionaries are indexed by keys (any immutable type like strings or numbers).
+Keys are unique.</p>
+<pre><code class="language-python">d = { 'k1': 'val1', 'k2': 'val2' }
+</code></pre>
+<p>Use <code>dict()</code> to build a dictionary from a sequence of key-value pairs:</p>
+<pre><code class="language-python">d = dict( [ ('key1', val1), ('key2', val2) ] )
+</code></pre>
+<p>To add or modify an entry:</p>
+<pre><code class="language-python">d[ 'key' ] = 'val'
+</code></pre>
+<p>To get an entry:</p>
+<pre><code class="language-python">d[ 'key' ]
+</code></pre>
+<p>with this notation you will receive an exception if the key does not exist.
+With the following usage you will receive either the key value or a default value
+(with no default value specified you will get <code>None</code> if the key does not exist):</p>
+<pre><code class="language-python">d.get( key, &lt;default&gt; )
+</code></pre>
+<p>To remove an entry:</p>
+<pre><code class="language-python">del d[ 'key' ]
+</code></pre>
+<p>To iterate over all keys and values:</p>
+<pre><code class="language-python">for key,val in released.items():
+</code></pre>
+<p>To delete an element use the <code>del()</code> method (gives <code>KeyError</code> if you try to
+delete an unexisting element) or the <code>pop()</code> method.</p>
+<p>To test the presence of a key use the <code>has_key()</code> method.</p>
+<p>To merge 2 dictionaries use the <code>update()</code> method.</p>
+<h3>Literals</h3>
+<ul>
+<li><code>[]</code> = empty list</li>
+<li><code>()</code> = empty tuple</li>
+<li><code>{}</code> = empty dict</li>
+</ul>
+<p>There is no literal for empty set, use <code>set()</code>.</p>
+<h3>Function Arguments</h3>
+<p>Function arguments can be Tuples or Dictionary:</p>
+<ul>
+<li><code>*args</code> collect all unnamed arguments as a Tuple.</li>
+<li><code>**args</code> collect all named arguments as a Dictionary.</li>
+</ul>
+<h3>Function Call</h3>
+<p>With <code>*</code> it is possible to force unpacking of a tuple: it transform the tuple into
+the list of unnamed parameters:</p>
+<pre><code class="language-python">f( *tuple )  =&gt;  f( val1, val2 … )
+</code></pre>
+<p>With <code>**</code> it is possible to force unpacking of a dictionary: the dictionary is
+transformed into a list of named parameters:</p>
+<pre><code class="language-python">f( *dict )  =&gt;  f( key1=val1, key2 = val2 … )
+</code></pre>
+<p>Each key of the dictionary must match a name in the parameter list, the function
+must be declared:</p>
+<pre><code class="language-python">def f( key1, key2 …)
+</code></pre>
+<h3>Global Variables</h3>
+<p>With Python variables are local, if not otherwise declared. All variables have
+the scope of the block, where they are declared and defined in.
+They can only be used after the point of their declaration.
+This means that if you want to read a global variable you can just use it like a local variable.
+But if you want to make an assignment to a global variable you must use the global keyword.
+Otherwise the assignment will create a new local variable that will hide the global variable.</p>
+<h2>Language</h2>
+<h3>Name spaces</h3>
+<p>A <em>name space</em> is mapping from name to object (or attributes).
+Any attribute may be accessible from anywhere if prefixed by its name space: <code>namespace.attribute</code>.</p>
+<p>A <em>scope</em> is a textual region where a name space is directly accessible (without a prefix).</p>
+<p>During execution, there are at least three nested scopes whose name spaces are directly accessible:</p>
+<ul>
+<li>the innermost scope, which contains the local names (function or class)</li>
+<li>scopes of any enclosing functions which contains non-local, but also non-global names</li>
+<li>the current module’s global names</li>
+<li>the outermost scope (searched last) is the name space containing built-in names</li>
+</ul>
+<p>If a name is declared global, then all references and assignments go directly
+to the middle scope containing the module’s global names. Otherwise, all variables
+found outside of the innermost scope are read-only (an attempt to write to such a
+variable will simply create a <em>new</em> local variable in the innermost scope,
+leaving the identically named outer variable unchanged).</p>
+<p>Outside functions, the local scope references the same name space as the global scope.</p>
+<p>If no <a href="https://docs.python.org/2/reference/simple_stmts.html#global">global</a>
+statement is in effect – assignments to names always go into the innermost scope.
+Assignments do not copy data — they just bind names to objects.
+The same is true for deletions: the statement <code>del x</code> removes the binding of <code>x</code>
+from the name space referenced by the local scope.</p>
+<p>There are several reserved name spaces:</p>
+<p>Namespace     | Usage
+------------- | ------------------------------
+<code>__builtin__</code> | module name for built-in names
+<code>__main__</code>    | statements executed by the top-level invocation are considered part of this module
+<code>__all__</code>     | list of public objects of a module. Affects the from <!-- raw HTML omitted --> import * behavior only. Members that are not mentioned in <code>__all__</code> are still accessible from outside the module and can be imported with from <!-- raw HTML omitted --> import <!-- raw HTML omitted -->.</p>
+<h3>Modules</h3>
+<p>A module is a text file containing python code. The text file must be named <code>&lt;module&gt;.py</code>.
+The name of the module is stored in the <code>__main__</code> variable.
+With the <code>import</code> statement all symbols defined inside a module will be created
+inside a new name space with a name equal to the module name.
+Theses symbols can are accessible with the <code>&lt;module&gt;.&lt;symbol&gt;</code> notation.</p>
+<p>The <code>from &lt;module&gt; import &lt;symbols&gt;</code> statement import symbols from the module
+directly inside the calling name space.</p>
+<p>The import statement will first search for a module from the native modules
+then it will search for a filename <code>&lt;module&gt;.py</code> from the <code>sys.path</code> variable.
+This variable is set up from:</p>
+<ul>
+<li>the current directory</li>
+<li>the <code>PYTHONPATH</code> environment variable</li>
+<li>defaults values from the python installation</li>
+</ul>
+<p>A more generalized way to import a module is:</p>
+<pre><code>&lt;module&gt; = imp.load_source('&lt;name&gt;', '&lt;path to filename&gt;')
+</code></pre>
+<p>This allows to import a module with a filename with no <code>.py</code> extension or out of the <code>sys.path</code> variable.
+You can also use <code>sys.dont_write_bytecode = True</code> to prevent <code>&lt;filename&gt;c</code> file creation (compiled module).</p>
+<h4><code>__name__</code></h4>
+<p><code>__name__</code> is a special variable set by python for every script. Its value is either:</p>
+<ul>
+<li>The name of the script.</li>
+<li>The value <code>__main__</code> for the first loaded script (with <code>python &lt;script&gt;</code> or <code>python -m &lt;script&gt;</code>)..</li>
+</ul>
+<h4>Import</h4>
+<p>An import statement can be absolute or relative (python3 support only explicit relative imports):</p>
+<pre><code class="language-python">	from base import class	# &lt;- absolute
+	from .base import class	# &lt;- explicit relative
+</code></pre>
+<p>Relative imports are based on the name of the current module (<code>__name__</code>).
+As the main module name is always <code>__main__</code> explicit relative import is not
+possible from the main module (and must always use absolute imports).</p>
+<h3>Classes</h3>
+<h4>Class Definition</h4>
+<pre><code class="language-python">class ClassName:
+	val1 = 'value'	# shared by all instances of class
+	def fct(self):	# class method (bounded method)
+		self.val2 = 5 # instance attribute
+</code></pre>
+<p>When executed it creates a name space and a class object.</p>
+<h4>Class Objects</h4>
+<p>Class objects support attribute references (MyClass.x) and instantiation.
+Instantiation uses function notation to create a new instance of the class:</p>
+<pre><code class="language-python">x = MyClass()
+</code></pre>
+<p>Class objects may have special functions:</p>
+<p>Function      | Usage
+------------- | ------------------------------
+<code>__init__()</code>  |  Called automatically by class instantiation to initialize the instance. May have parameters and must return nothing.
+<code>__new__()</code>   | Called before object creation (before <code>__init__</code>). Must return an object, usually created with <code>super()</code>.
+<code>__doc__</code>     | Attribute, contains the doc string of the class.
+<code>__dict__</code>    | Attribute, list all functions and attributes of the class
+<code>__getattr__</code> | Called when the default attribute access (through <code>__dict__</code>) fails
+<code>__str__</code>     | function defined by user. Returns a string object and called by srt(). Build an informal string representation of an object.
+<code>__call__(self)</code> | What to do when: <!-- raw HTML omitted -->x=Class(); x()<!-- raw HTML omitted -->. (Calling an instance).
+<code>__getitem__(self, idx)</code> | What to do when: <code>x=Class(); x[idx]</code>. May raise <code>IndexError</code> exception.
+<code>__iter__(self)</code> | What to do for things like <code>for …</code>
+<code>__len__(self)</code> | What to do when <code>len()</code> is called.
+<code>__repr__</code>    |</p>
+<p>A method can be called after it is bounded: <code>python x.f()</code></p>
+<p>But a bounded method can also be stored: <code>python y = x.f</code></p>
+<p>and called later: <code>python y()</code></p>
+<h4>Inheritance</h4>
+<p>A class may derive from one or multiple other classes:</p>
+<pre><code class="language-python">class MyClass(Base1, Base2)
+	…
+</code></pre>
+<h4>Methods</h4>
+<p>A method is a function in a class namespace. It takes a class instance as the
+first parameter called <code>self</code> by convention.</p>
+<p>All methods are <code>virtual</code>. There is no private method but by convention methods
+those name start with _ should not be called from outside the class.</p>
+<p>Methods can be of different types with function decorators:</p>
+<p>Decorator                     | Usage
+----------------------------- | ------
+@classmethod                  | Can be called <code>Class.classmethod()</code> or <code>Class().classmethod()</code>.
+def classMethod(cls, args...) | Take a class object as the first parameter instead of a class instance.
+| Used for factory methods.
+@staticmethod                 | Create a static method: does not take a class instance as the first parameter. Called <code>Class.method()</code>.</p>
+<h3>Decorators</h3>
+<p>Functions in Python are objects and a variable can hold a function:</p>
+<pre><code class="language-python">def myfunction()
+		Pass
+myvar = myfunction
+</code></pre>
+<p>It is also possible to declare a function inside another function:</p>
+<pre><code class="language-python">def myfunction()
+		def myotherfunction()
+			pass
+		myotherfunction()
+</code></pre>
+<p><code>myotherfunction()</code> is reachable only inside <code>myfunction()</code> and cannot be called from the outside.</p>
+<p>A decorator is a function which returns a hidden function (closure).
+The purpose is to add code before and after the function call:</p>
+<pre><code class="language-python">def wrapper( func )
+		def trt( )
+			print(&quot;before&quot;)
+			func()
+			print(&quot;after&quot;)
+		return trt
+</code></pre>
+<p>And use it with: <code>myfunction = wrapper(myfunction)</code>.
+In this case <code>myfunction</code> attributes (<code>__doc__</code> for example) will be the <code>trt</code> attributes
+which usually is not what we want. You can use the <code>@functools.wrap(func)</code>
+before the <code>def trt()</code> which will copy attributes of the <code>func</code> function to the <code>trt</code> function.</p>
+<p>With python syntax use:</p>
+<pre><code class="language-python">@wrapper
+def myfunction()
+</code></pre>
+<p>If your decorator needs arguments you must implement another level of indirection:
+you wrapper must create an other decorator wrapper and you wrapper must be called like a function (<code>@wrapper(arg)</code>).</p>
+<h3>Map, filter, reduce (list functions)</h3>
+<p><code>Map</code> takes a function and a list, tuple or iterable objects and call function for each elements.
+It returns a iterator other the results which can be converted to a list with the <code>list()</code> function:</p>
+<pre><code class="language-python">def area(r):
+		return math.pi * (r**2)
+	rad = [ 5, 8, 2.5 ]
+	res = list(map(area, rad))
+</code></pre>
+<p>The Filter function (<code>filter(funct, data)</code>) returns data for which the function is true:</p>
+<pre><code class="language-python">list(filter(lambda x: x &gt; 0, data))
+list(filter(None, data))` # removes empty (false) data (“”, 0, 0j, [], (), {}, False, None)
+</code></pre>
+<p>Reduce apply a function (f(x, y)) for each pair in data:</p>
+<pre><code>functool.reduce(f, data)
+</code></pre>
+<h2>Python 3</h2>
+<p>A new type is used from strings: <code>str</code>.</p>
+<p>With python 3 all strings are unicode encoded. This means that a string of character
+cannot be anymore considered as a string of bytes.</p>
+<p>In order to represent a stream of bytes a new type was created: <code>bytes</code>, a stream of integers.</p>
+<p>A bytes literal is created with <code>b'xxx'</code>.</p>
+<p>To convert a bytes to a string: <code>var.encode()</code> (returns a <code>str</code> type)</p>
+<p>To convert a string of characters to a byte string: <code>var.decode()</code> (returns an <code>bytes</code> type)</p>
+<h2>Python Project Structure</h2>
+<p>Every Python code file (.py) is a module.</p>
+<p>Organize your modules into packages. Each package must contain a special <code>__init__.py</code> file.</p>
+<p>Modules should have short, all-lowercase names. Underscores can be used in the module name
+if it improves readability. Python packages should also have short, all-lowercase names,
+although the use of underscores is discouraged.
+Remember that modules are named by filenames, and packages are named by their directory name.</p>
+<p>Your project should generally consist of one top-level package, usually containing sub-packages.
+That top-level package usually shares the name of your project,
+and exists as a directory in the root of your project's repository.</p>
+<p>Use absolute (prefered) or eventually relative imports to refer to other modules in your project.</p>
+<p>Executable projects should have a <code>__main__.py</code> in the top-level package.
+Then, you can directly execute that package with <code>python -m myproject</code>.</p>
+<h2>Calling C Functions</h2>
+<pre><code class="language-python">import ctypes
+_libc = ctypes.cdll.LoadLibrary(&quot;libc.so.6&quot;)
+result = _libc.umount(ctypes.c_char_p(target))
+</code></pre>
+<h2>Debugging</h2>
+<p><code>python -m pdb script.py</code></p>
+<p>To display attributes of a object: <code>p obj.__dict__	OR  p vars(obj)</code></p>
+<p>To list names in a scope: <code>dir(obj)</code></p>
+<p>To get the type (or class) of a variable: <code>type(var)</code></p>
+<h3>Commands</h3>
+<p>Command         | Usage
+--------------- | ------
+b(reak)         | list breakpoints
+b(reak) <!-- raw HTML omitted --> | add a new breakpoint
+c(ontinue)      | continue execution
+n(ext)          | continue execution until next line
+s(tep)          | continue execution and stop ASAP
+r(eturn)        | continue execution until current function returns
+j(ump           | set next line to be executed
+cl(ear) <!-- raw HTML omitted --> | delete breakpoint
+a(rgs)          | print arguments of current function
+l(ist)          | print source code around line
+pp              | pretty print value or expression</p>
+<p>It is possible to integrate a breakpoint inside the code:</p>
+<pre><code class="language-python">import pdb
+pdb.set_trace()
+</code></pre>
+<p>The <code>.pdbrc</code> file contains commands that are executed when a debugger session is started.</p>
+<h2>Remarks</h2>
+<p><code>Do .. while</code> does not exist in Python. Use a <code>While True: &lt;body&gt; if &lt;test&gt;: break;</code> instead.</p>
+<p>To make logging write on stdout, add a streamHandler to the root logger:</p>
+<pre><code class="language-python">root = logging.getLogger()
+root.setLevel(logging.DEBUG)
+handler = logging.StreamHandler(sys.stdout)
+handler.setLevel(logging.DEBUG)
+root.addHandler(handler)
+</code></pre>
+<p><a href="https://python-future.org/compatible_idioms.html">Writing portable python ⅔ code</a>.</p>
+<h2>References</h2>
+<p><a href="http://book.pythontips.com/en/latest/index.html">Python tips</a>: many tips on python development.
+<a href="https://docs.python.org/2/library/functions.html">Built-in functions list</a>.
+<a href="https://docs.python.org/fr/2/library/stdtypes.html">Native types</a>.
+<a href="https://pyformat.info/">Output formatting</a>.</p>

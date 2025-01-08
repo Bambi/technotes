@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<title>fish</title>
+<link rel="stylesheet" href="file:///home/as/.config/rucola/default_dark.css">
+<h1>Fish Shell</h1>
+<p>See also <a href="shells.md">other shells</a> for differences between shells.</p>
+<h1>Variables</h1>
+<h2>Basic Usage Examples</h2>
+<p>Creating: <code>set PATH path $PATH</code></p>
+<p>Removing a path: <code>set PATH (string -v path $PATH)</code></p>
+<p>Deleting a variable: <code>set -e VAR</code></p>
+<h2>Environment Variables</h2>
+<p>Exported variable in fish: <code>set -x VAR value</code></p>
+<p>Unexporting a variable: <code>set -u VAR</code></p>
+<h2>Variable Scope</h2>
+<p>Different than exported variables: exported variables can be local/global/universal (but usualy global).</p>
+<ul>
+<li>local scope: specific to the current block and automatically erased when block goes out of scope.
+`set -l (--local)</li>
+<li>function scope: variables specific to the current function.
+<code>set -f (--function)</code></li>
+<li>global scope: variables specific to the current fish session (process).
+<code>set -g (--global)</code></li>
+<li>universal scope: variables shared with all fish session on the computer.
+<code>set -U (--universal)</code>
+stored in <code>.config/fish/fish_variables</code></li>
+</ul>
+<p>If no scope is given a new variable is created in the function scope if created in a function,
+else in the global scope.</p>
+<p>Environment variables will usualy be created with <code>set -gx</code>.</p>
+<p>For fish customization variables, use universal variables: <code>set -U</code>.</p>
+<p>When fish starts, inherited environment variables will be created as global/exported variables. You should
+not make theses variables universal!</p>
+<h1>References</h1>

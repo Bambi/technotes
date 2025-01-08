@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<title>cloud</title>
+<link rel="stylesheet" href="file:///home/as/.config/rucola/default_dark.css">
+<h1>Cloud</h1>
+<h2>Definitions</h2>
+<p>Cloud: on demand and scalable access to servers, data and network resources.
+MaaS: Metal as a service, provides physical servers where you can install OS or hypervisor of your choice.
+IaaS: Infrastructure as a service, provides VM. Ex: Azure, Amazon EC2, GCE
+PaaS: Platform as a service, provides a developer platform for Python, Ruby, Node.js, MySQL, RabbitMQ, etc. Ex: Salesforce, AWS Elastic.
+SaaS: Software as a service, provides application access. Ex: Office365, salesforces.com, Gmail, Google drive.</p>
+<h2>Technologies</h2>
+<p><a href="https://opennetworking.org/onos/">ONOS</a>: SDN controller / orchestrator
+<a href="https://github.com/floodlight">Floodlight</a>: SDN controller
+<a href="https://www.opendaylight.org/about/platform-overview">OpenDaylight</a>:  SDN controller
+<a href="https://github.com/opencomputeproject">Open Compute Project</a>: software for managing switches
+<a href="https://github.com/opencomputeproject/onie">ONIE</a>: operating system, for bare metal switches, that provides automated provisioning.
+<a href="https://www.onap.org/about">ONAP</a>: NFV orchestrator
+<a href="https://osm.etsi.org/">OSM</a>: ONAP alternative</p>
+<h2>Other Technologies</h2>
+<p>KVM: linux kernel modules to run a VM.
+Qemu: linux command line tools to drive KVM.
+OCI (Open Container Initiative): file format specification to describe a container.
+<a href="https://github.com/hyperhq">runV</a>: hypervisor to run an OCI file in a VM. The kernel and rootfs are fixed (stored in /usr/lib/hyper).
+<a href="https://firecracker-microvm.github.io/">Firecracker</a>: Minimal VM manager (replaces Qemu) to run a container inside a VM. IOW runs a VM with minimal functionality (virtio-net, virtio-block, serial console, and a 1-button keyboard controller used only to stop the microVM).
+<a href="https://github.com/opencontainers/runc">runc</a>: lightweight universal run-time container. Required by OCI.
+<a href="https://containerd.io/">containerd</a>: daemon runtime which can manage a complete container lifecycle - from image transfer/storage to container execution, supervision and networking. Compatible with OCI. Can run also under Windows. Does not build container images ; this is done by <a href="https://github.com/genuinetools/img">img</a>, <a href="https://github.com/containers/buildah">buildah</a> or <a href="https://github.com/GoogleContainerTools/kaniko">kaniko</a>.
+docker engine: handles docker user interaction. Communicates with containerd.
+cri-o:
+Kata containers: Wrapper around containers that executes a container inside a lightweight VM. =&gt; feels like a container but with increased isolation.</p>

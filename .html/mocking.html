@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<title>mocking</title>
+<link rel="stylesheet" href="file:///home/as/.config/rucola/default_dark.css">
+<h1>C Mocking Techniques</h1>
+<h2>Link Wrappers</h2>
+<p>Allow a symbol to be redefined with the linker option: <code>-Wl,--wrap=foo</code>.</p>
+<ul>
+<li>any <em>undefined</em> reference to <code>foo</code> will be resolved to <code>__wrap_foo</code>.</li>
+<li>any undefined reference to <code>__real_foo</code> will be resolved to <code>foo</code>.</li>
+</ul>
+<h2>Weak linking</h2>
+<p>With the <code>weak</code> attribute on a symbol.</p>
+<p>A weak symbol can be replaced by an identical non weak symbol.</p>
+<h3>How to make a weak symbol without modifying sources</h3>
+<p>Several things to take in account:</p>
+<ul>
+<li>it is possible to declare a symbol multiple times provided that the
+definition stays the same.</li>
+<li>attributes on multiple symbol definitions are cumulative: if you have
+symbol <code>x</code> defined with attribute <code>a</code> and an other definition of <code>x</code> with
+attribute <code>b</code> then you end up with the definition of <code>x</code> with attributes
+<code>a+b</code>.</li>
+</ul>
+<p>If you want to make symbol <code>x</code> a weak symbol without modifying the file that
+declare <code>x</code> you can:</p>
+<ul>
+<li>
+<p>create a new include file with the definition of <code>x</code> with the attribute
+<code>weak</code>.</p>
+</li>
+<li>
+<p>compile your project with the added CFLAG <code>-include=&lt;new include&gt;</code> which
+will include the new include file at the beggining of each compilation unit
+thus making <code>x</code> a weak symbol.</p>
+<h2>References</h2>
+<ul>
+<li><a href="https://packetpushers.net/exploring-robot-framework-for-automated-testing/">Exploring Robot Framework For Automated Testing</a></li>
+</ul>
+</li>
+</ul>

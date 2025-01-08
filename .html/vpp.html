@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<title>vpp</title>
+<link rel="stylesheet" href="file:///home/as/.config/rucola/default_dark.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/go.min.js"></script>
+<script>hljs.highlightAll();</script>
+<h1>Vector Packet Processor</h1>
+<h2>Installation</h2>
+<p>Ubuntu installation, use <a href="https://packagecloud.io/fdio">fdio</a> packages:</p>
+<pre><code class="language-sh">curl -s https://packagecloud.io/install/repositories/fdio/2402/script.deb.sh | sudo bash
+sudo apt install vpp vpp-plugin-core vpp-plugin-dpdk
+sudo apt install vpp-dev # for development
+</code></pre>
+<p>After install the vpp service (vpp) should be running. You can start/stop the
+service with <code>service vpp start|stop</code>.
+A vpp user is created. To avoid running tools with root rights you should add
+your user to the vpp group: <code>sudo usermod -a -G vpp as</code></p>
+<h2>Features</h2>
+<ul>
+<li>vector packet processing: process a bunch of packets (up to 256) at a time
+to increase performance by reducing data cache misses and by prefetching the
+next packet in the vector.</li>
+<li>packet processing graph: used to decompose the processing pipeline. the graph
+is applied to packet vectors, node by node. Plugins can create graph nodes,
+rearrange the graph.</li>
+<li>implement L2 - L4 network stack.</li>
+<li>interract with the host stack though veth interfaces.</li>
+<li>support containers and VMs.</li>
+<li>comes with continuous integration and testing system.</li>
+</ul>
+<h2>Architecture</h2>
+<p>Unless DPDK which is a library, VPP is a framework running a daemon (vpp)
+configured with a startup file (<code>/etc/vpp/startup.conf</code> by default).</p>
+<p>Developper will write plugins which will be loaded and run by the vpp daemon.
+Most of vpp features are implemented as in-tree plugins.
+A plugin can add nodes graph, rearange the node graph and add API.
+Plugins are loaded with <code>dlopen()</code>.</p>
+<p>It is possible to run multiple vpp instances but each instance must have a specific
+name or prefix. Also only one instance can use the DPDK plugin.</p>
+<p>A shell (<code>vppctl</code>) is used to interract with the daemon. You can launch it with the
+socket created by the daemon: <code>vppctl -s /run/vpp/cli-vpp1.sock</code>.</p>
+<h3>Layering</h3>
+<p>VPP is composed of several libraries each made from the previous one.</p>
+<ul>
+<li>VPP infra: meory management, vectors, rings, hashing.</li>
+<li>Vlib: buffer, graph, node management, tracing, threading, CLI and main().</li>
+<li>Vnet: networking management: devices, L2-4, session management, overlays, control plane.</li>
+<li>Plugins: can implement any functionnality.</li>
+</ul>
+<h2>vppctl</h2>
+<p>Main commands:</p>
+<ul>
+<li><code>create host-interface name &lt;name&gt;</code>: create a vpp interface with the host (veth).</li>
+<li><code>set interface state &lt;name&gt; up|down</code>:</li>
+<li><code>set interface ip address &lt;intf&gt; &lt;addr&gt;</code>: set interface ip address.</li>
+<li><code>show interface</code>: show interface list.</li>
+<li><code>show hardware-interfaces</code>: show detailed interface list.</li>
+<li><code>show interface addr</code>: show L3 interface addresses.</li>
+</ul>
+<p>Routing and switching:</p>
+<ul>
+<li><code>show ip neighbors</code>: show ARP table.</li>
+<li><code>show ip fib</code>: show routing table.</li>
+<li><code>ip route add &lt;ip/mask&gt; via &lt;gw ip&gt;</code>: add an ip route.</li>
+</ul>
+<p>Tracing and debugging commands:</p>
+<ul>
+<li><code>show trace</code>:</li>
+<li><code>clear trace</code>: clear trace buffer and added traces.</li>
+<li><code>trace add &lt;graph node&gt; &lt;nb&gt;</code>: add a trace, nb: trace buffer size (nb packets).</li>
+<li><code>show runtime</code>: list registered plugins</li>
+<li><code>show version</code>: show VPP version.</li>
+</ul>
+<p>See also <a href="https://fd.io/docs/vpp/v2101/reference/cmdreference/index.html">Useful Debug CLI</a>
+and <a href="https://s3-docs.fd.io/vpp/24.02/cli-reference/index.html">CLI Reference</a>.</p>
+<p><code>host-interface</code> are VPP interfaces that will attach to Linux AF_PACKET interface (veth).</p>
+<p><code>memif</code> interfaces are software interface used between VPP instances or applications.
+They are created by pair (a pair must share the same id) and one of them is <code>master</code>
+while the other one is <code>slave</code>:
+<code>create interface memif id x [master|slave]</code>.</p>
+<h2>Development</h2>
+<p>A vector of packets is called a <em>frame</em> (~ vector). Each element is called a
+<em>vector</em> (~ packet). A vector is an index to a <code>vlib_buffer_t</code>.</p>
+<p>VPP uses as much as possible specific programming style that increase performance
+such as multi-loop, branch prediction (<code>unlike()</code>), function flattening, lock-free
+structures.</p>
+<p>Graph nodes are optimized to fit inside the instruction cache and packets are
+pre-fetched into the data cache.</p>
+<h3>Compilation</h3>
+<pre><code class="language-sh">make install-dep
+make build[-release]
+</code></pre>
+<h3>VPPInfra Library</h3>
+<p>Collection of high-parformance dynamic arrays, bitmaps, high-precision real-time
+clock, event logging, data structure serialization.</p>
+<ul>
+<li><code>types.h</code>: defines <code>u8, u16, u32, u64, i8, ..., f32, f64, uword</code></li>
+</ul>
+<h4>Vectors (vec.h)</h4>
+<p>A vector is a dynamicaly resized array of data with user defined header.
+Many vpppinfra data structures (e.g. hash, heap, pool) are vectors with various different headers.
+The memory layout looks like this:</p>
+<ul>
+<li>user header (optional)</li>
+<li>Aligment padding (if needed)</li>
+<li>Nb elements</li>
+<li>Element 1  &lt;- user pointer</li>
+<li>Element 2
+...</li>
+<li>Element N-1</li>
+</ul>
+<p>Null pointers are valid vectors of lenght 0 (but pointers to un-initialised vector
+is not supported!).</p>
+<h4>Format</h4>
+<p>Equivalent to <code>printf()</code>. The first argument is a vector (<code>u8*</code>) to which it appends
+the result of the current operation. This makes chaining calls easy:</p>
+<pre><code class="language-c">u8 * result;
+result = format (0, &quot;junk = %d, &quot;, junk);
+result = format (result, &quot;more junk = %d\n&quot;, more_junk);
+</code></pre>
+<p>The <code>%U</code> format is handy for a user-defined format:</p>
+<pre><code class="language-c">u8 * format_junk (u8 * s, va_list *va)
+{
+  junk = va_arg (va, u32);
+  s = format (s, &quot;%s&quot;, junk);
+  return s;
+}
+result = format (0, &quot;junk = %U&quot;, format_junk, &quot;This is some junk&quot;);
+</code></pre>
+<h4>Unformat</h4>
+<p>Equivalent to <code>scanf()</code> but more general. Support the <code>%U</code> for user-defined format.</p>
+<h4>Errors and Warnings</h4>
+<p>Many VPP functions return the type <code>clib_error_t*</code>. Theses are abritrary strings
+with a bit of metadata (error/warning). Returning a null <code>clib_error_t*</code> indicates
+a no-error.</p>
+<h4>Shared-memory Message API</h4>
+<p>Asynchronous message-passing API over unidirectional queues is used for communication
+between VPP and applications (API are also available via sockets). This makes it
+possible to capture the messages and replay them for debugging purpose.</p>
+<h4>Debug CLI</h4>
+<p>Debug CLI commands are easy to add:</p>
+<pre><code class="language-c">static clib_error_t *
+show_ip_tuple_match (vlib_main_t * vm,
+                     unformat_input_t * input,
+                     vlib_cli_command_t * cmd)
+{
+    vlib_cli_output (vm, &quot;%U\n&quot;, format_ip_tuple_match_tables, &amp;routing_main);
+    return 0;
+}
+static VLIB_CLI_COMMAND (show_ip_tuple_command) = {
+    .path = &quot;show ip tuple match&quot;,
+    .short_help = &quot;Show ip 5-tuple match-and-broadcast tables&quot;,
+    .function = show_ip_tuple_match,
+};
+</code></pre>
+<p>Debug CLI is available with debug builds. It is also possible to expose the CLI
+as a telnet interface.</p>
+<h4>Packet Tracer</h4>
+<p>Vlib can trace packets (available with the <code>trace</code> command).
+Traces can be put on input nodes:
+<code>af-packet-input</code>, <code>avf-input</code>, <code>bond-process</code>, <code>dpdk-crypto-input</code>,
+<code>dpdk-input</code>, <code>handoff-trace</code>, <code>ixge-input</code>, <code>memif-input</code>, <code>mrvl-pp2-input</code>,
+<code>netmap-input</code>, <code>p2p-ethernet-input</code>, <code>pg-input</code>, <code>punt-socket-rx</code>,
+<code>rdma-input</code>, <code>session-queue</code>, <code>tuntap-rx</code>, <code>vhost-user-input</code>, <code>virtio-input</code>,
+<code>vmxnet3-input</code>.</p>
+<h3>API</h3>
+<p>The VPP binary interface is a message passing API that support method types:</p>
+<ul>
+<li><em>Request/Reply</em>: client sends a message and server reply with a signe message.</li>
+<li><em>Dump/Detail</em>: client send a bulk request message and server reply with one or
+a set of detail messages. Used for acquiring bulk information like the complete
+FIB table.</li>
+<li><em>Event</em>: client register for getting asynchronous notifications from the server.</li>
+</ul>
+<p>Messages from the client must include a client index and a context field to let
+the client match request with reply (comminucation is asynchronous).</p>
+<p>Types are C types (u8, u16, u32, u64, i8, i16, i32, i64). Strings are represented
+as <code>u8[]</code> or with the string typedef. Ex:</p>
+<pre><code class="language-c">define show_version {
+   u32 client_index;
+   u32 context;
+};
+
+define show_version_reply {
+   u32 context;
+   i32 retval;
+   string program[limit=32];
+   string version[limit=32];
+   string build_date[limit=32];
+   string build_directory[limit=256];
+};
+</code></pre>
+<h3>Vnet Library</h3>
+<h3>Graph Node</h3>
+<p>Created with the <code>VLIB_REGISTER_NODE()</code> macro. A graph node is a structure with:</p>
+<ul>
+<li>a name, can be seen with <code>show runtime</code></li>
+<li>a number of error codes <code>n_errors</code></li>
+<li><code>error_strings</code>, vector of strings indexed by error code. see <code>show errors</code>.</li>
+<li><code>n_next_node</code>, number of next nodes that follow</li>
+<li><code>next_nodes[]</code>, names of next nodes which this node feeds into.</li>
+<li><code>vlib_node_function_t*</code>: vector processing function for this node</li>
+</ul>
+<p>Each node expose a binary API and a CLI.
+The API is implemented as a high performance shared-memory ring buffer and allows
+asynchronous callback. The API is also usable from different languages (Python,
+Go, Java).
+The CLI is accessible via a Unix socket and is composed of a list of commands.</p>
+<p>Packets are processed in group of 4, remaining packets are processed one by one:
+. while packets in vector
+. while 4 or more packets
+. prefetch #3 and #4
+. process #1 and #2
+. update counters, advance buffers
+. enqueue packet to next node
+. while any packets
+. same as above but single packet</p>
+<h3>Memif Library (libmemif)</h3>
+<p>Memif provides a high performance packet exchange between user application and
+VPP or between multiple user application. Memif provides a virtual network interface
+on top of shared memory.
+Libmemif is located under <code>extras/libmemif</code> and must be build separately.</p>
+<h3>Plugin Development</h3>
+<ul>
+<li><a href="https://wiki.lfnetworking.org/display/LN/2022-11+-+FD.io%3A+How+to+develop+and+maintain+an+out-of-tree+VPP+plugin">FD.io: How to develop and maintain an out-of-tree VPP plugin</a></li>
+</ul>
+<p>You can generate a plugin skeleton with the <code>make_plugin.sh</code> script.
+A plugin will define a <code>main_t</code> structure that should contains the plugins specific
+data structures (avoid creating static or global variables).
+A plugin use the macro <code>VLIB_PLUGIN_REGISTER</code> to register itself into the vpp
+binary API message dispatcher. VPP uses <code>dlsym()</code> to find the <code>vlib_plugin_registration_t</code>
+data generated by the register macro (must be present in the <code>.so</code> file to be
+considered as a plugin).</p>
+<h4>API file</h4>
+<p>This file contains the API message definitions. It defines data structures exchanged
+between the plugin and VPP. Theses structures are then generated as C code for VPP
+but can also be generated in other programming languages if the plugin is not written
+in C.</p>
+<p>For each message defined in the API file the plugin have to implement a handler which
+will receive a message pointer <code>*mp</code> (the struct defined in the API file) and return
+an other message pointer <code>*rmp</code> of the reply type.</p>
+<p>The <code>autoreply</code> keyword before a message definition will make the generation of
+an implicit message (named <code>&lt;message&gt;_reply</code>) containing only a return value.</p>
+<p>API messages are net-endian and VPP is host-endian so you will need to use:</p>
+<ul>
+<li><code>u32 value = ntohl(mp-&gt;value);</code></li>
+<li><code>rmp-&gt;value = htonl(value);</code></li>
+</ul>
+<h2>Definitions</h2>
+<ul>
+<li>FIB (Forwarding Information Base): forwarding table optimized for speed used
+to associate addresses (IP, MAC) to output ports/VLAN.</li>
+</ul>
+<h2>References</h2>
+<ul>
+<li><a href="https://wiki.fd.io/view/VPP">VPP Wiki</a></li>
+<li><a href="https://s3-docs.fd.io/vpp/24.02/">VPP Docs</a></li>
+<li><a href="https://ipng.ch/s/articles/">IPng Networks</a></li>
+<li><a href="https://pantheon.tech/vpp-guide/">VPP Guide</a></li>
+</ul>

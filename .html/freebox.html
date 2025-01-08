@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<title>freebox</title>
+<link rel="stylesheet" href="file:///home/as/.config/rucola/default_dark.css">
+<h1>Freebox (fibre)</h1>
+<h2>Jargon</h2>
+<ul>
+<li><a href="https://www.busyspider.fr/Free-fibre-optique-quel-kit-fibre-branchement-selon-freebox-ou-abonnement-onu-ou-module-fibre.php#onu">ONU</a>
+Optical Network Unit: Boitier convertisseur (PON &lt;-&gt; Ethernet) entre fibre et freebox.</li>
+</ul>
+<p>Voir: <a href="https://www.echosdunet.net/dossiers/fibre-ont-sfp">Boîtier ONT et module SFP : différences, avantages et inconvénients</a></p>
+<h2>Informations techniques</h2>
+<p>Les données WAN fibre Internet transitent dans le vlan 836 tandis que les données
+TV utilisent le vlan 835.
+Le réseaux Free ne supporte que IPv6. IPv4 transite dans un tunnel 4rd (ipip6 d’<a href="https://manpages.debian.org/stretch/iproute2/ip-tunnel.8.en.html">ip-tunnel</a>).
+L'addresse publique de la freebox est récupérée avec une requète DHCPv6.
+<a href="https://lafibre.info/remplacer-freebox/tuto-free-zmd-ipv4-fullstack-14-ipv4-plage-60-ipv6/">Free ZMD (4rd) - IPv4 FullStack + 1/4 IPv4 + Plage /60 IPv6 - OpenWrt</a>
+<a href="https://lafibre.info/materiel-informatique/degager-la-freebox-serveur-routeur-wifi-firewall-que-me-conseillez-vous/msg842768/#msg842768">Dégager la freebox serveur</a>
+<a href="https://lafibre.info/remplacer-freebox/tuto-remplacer-sa-freebox-par-un-routeur-ubuiquity-en-zmd-10g-epon/?PHPSESSID=0ud635gs2q3a3vkn8gpuk0ku7l">Remplacer sa freebox (non Delta) par un routeur Ubiquiti en ZMD (10G-EPON)</a></p>
+<h2>Remplacement</h2>
+<p>Candidats:</p>
+<ul>
+<li>NanoPi r2s: 4 Coeurs A53, 1 Go, 1 USB2, 2 Gb eth</li>
+<li>NanoPi r4s: 6 coeurs A53/A72, 4 Go, 2 USB3, 2 Gb eth</li>
+<li>NanoPi r5c: 4 coeurs A55, 4 Go, @ USB3, 2 Gb eth, 32G emmc, mpcie</li>
+<li>Radxa E25: équivalent r5c</li>
+</ul>
+<p>WiFi:</p>
+<ul>
+<li>
+<p>mt7922: WiFi 6E</p>
+</li>
+<li>
+<p><a href="https://github.com/mj22226/openwrt/releases/tag/linux-6.1">openwrt pour r5c</a></p>
+</li>
+<li>
+<p><a href="https://mans0n.github.io/2023/01/24/diy-6ghz-ap/">DIY Wi-Fi 6E AP</a></p>
+</li>
+<li>
+<p>voir aussi immortalwrt</p>
+</li>
+</ul>
+<h1>Références</h1>
+<p><a href="https://gonzague.me/avoir-internet-en-fibre-sans-utiliser-la-freebox-possible">Avoir Internet en fibre sans utiliser la Freebox</a>
+<a href="https://lafibre.info/remplacer-freebox/remplacer-la-freebox-par-un-router-pour-les-nuls/">Remplacer la Freebox par un router</a>
+<a href="https://lafibre.info/free-pro/freebox-pro-analyse-entre-lonu-et-la-box/">Freebox Pro - analyse entre l'ONU et la box</a>
+<a href="https://lafibre.info/remplacer-freebox/internet-vlan-836-sans-freebox/">Internet Vlan 836 sans freebox</a>
+<a href="https://tristramg.eu/fibre-openwrt/">Fibre free sans freebox</a>
+<a href="https://lafibre.info/remplacer-freebox/tutorial-remplacer-la-freebox-par-une-box-gnulinux/">Tutorial : remplacer la Freebox par une box GNU/Linux</a>
+<a href="https://cartefibre.arcep.fr/">arcep</a>
+<a href="https://lafibre.info/remplacer-freebox/">Remplacer Freebox</a>
+<a href="https://lafibre.info/remplacer-freebox/utiliser-un-serveur-linux-a-la-place-de-la-freebox-pour-debrider-la-connexion/">Utiliser un serveur Linux à la place de la freebox pour débrider la connexion</a></p>
