@@ -39,3 +39,16 @@ WiFi:
 [Remplacer Freebox](https://lafibre.info/remplacer-freebox/)
 [Utiliser un serveur Linux à la place de la freebox pour débrider la connexion](https://lafibre.info/remplacer-freebox/utiliser-un-serveur-linux-a-la-place-de-la-freebox-pour-debrider-la-connexion/)
 
+# BBox
+ONT: connecteur fibre GPON + unité de traitement des protocoles GPON
+Deux configuration possibles pour un ONT:
+- connecteur SFP GPON + boitier GPON externe
+- connecteur SFP GPON ONT uniquement (il intègre le boitier GPON dans le connecteur SFP)
+
+La box pure fibre est livrée avec un connecteur SFP GPON simple, la box faisant office
+de boitier GPON => il faut se procurer un boitier ONT (intégré ou pas au connecteur SFP).
+Voir:
+
+https://lafibre.info/remplacer-bbox/remplacer-la-bbox-pure-fibre-par-un-mikrotik/
+https://lafibre.info/remplacer-bbox/test-glasfaser-modem-2-telekom-pour-remplacement-ont-2-5gbe-synchro-ok-ipv4-ok/
+https://lafibre.info/remplacer-bbox/bbox-must-pas-dont/
