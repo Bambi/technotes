@@ -200,5 +200,7 @@ List SystemD services that have failed:
 
 $ systemctl list-units --state=failed
 
+## References
 - [Stephane cheat sheets](https://cheatsheets.stephane.plus/init-systems/systemd/)
 - [Systemd Documentation](https://systemd.io/)
+- [Hackaday Blog](https://hackaday.com/2024/04/11/linux-fu-getting-started-with-systemd/)

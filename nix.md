@@ -381,7 +381,10 @@ Core attributes:
 - `checkInputs`, `nativeCheckInputs`: lib/tools used for checks.
 - `doCheck`: (true/false), enable checks (disabled by default).
 
-> for generic hash use `hash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";`
+> for generic sha-256 hash use:
+> - base-64 `hash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";`
+> - base-32 `hash = "sha256-0000000000000000000000000000000000000000000000000000";`
+> - base-16 `hash = "sha256-0000000000000000000000000000000000000000000000000000000000000000";`
 
 References:
 - [Building a Nix Package](https://elatov.github.io/2022/01/building-a-nix-package/)

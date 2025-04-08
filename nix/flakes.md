@@ -23,7 +23,7 @@ Build it with `nix build`. By default it will build the `packages.<arch>.default
 attribute specified in the outputs attribute but you can specify an other one
 with `nix build .#<attribute>`.
 
-> Nix will build in the `$TMPDIR` directory or `/tmp` not set. Make sure you
+> Nix will build in the `$TMPDIR` directory or `/tmp` if not set. Make sure you
 > have enough space in your temporary directory!
 
 A flake build will produce a `flake.lock` file which can be refreshed with the
@@ -54,6 +54,27 @@ Standard flake input attribute-sets are:
 - `repo`:
 - `owner`:
 - `flake`: `true/false`, if false the repo does not contain a `flake.nix` file
+
+Flake output are defined into 2 categories:
+- system-specific outputs: the system denotes the cpu architecture and type of
+  the environment and is specified with `x86_64-linux` or `aarch64-linux`.
+  system specific outputs are:
+  - packages
+  - apps
+  - legacyPackages
+  - checks
+  - devShells
+  - formatter
+  - hydrajobs
+  - bundlers
+- system-independent outputs:
+  - overlays
+  - nixosConfigurations
+  - nixosModules
+  - templates
+  - homeConfigurations
+  - homeModules
+  - lib
 
 Standard flake [output schema attributes](https://nixos.wiki/wiki/Flakes) are:
 - `devShells.${system}.default`: used with `nix develop command`.

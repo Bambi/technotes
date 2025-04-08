@@ -1,7 +1,8 @@
 # Freebox (fibre)
 ## Jargon
 - [ONU](https://www.busyspider.fr/Free-fibre-optique-quel-kit-fibre-branchement-selon-freebox-ou-abonnement-onu-ou-module-fibre.php#onu)
-  Optical Network Unit: Boitier convertisseur (PON <-> Ethernet) entre fibre et freebox.
+  Optical Network Unit (ONT): Boitier convertisseur (PON <-> Ethernet) entre fibre et freebox.
+- Optical Line Terminaison (OLT): Terminal GPON coté opérateur.
 
 Voir: [Boîtier ONT et module SFP : différences, avantages et inconvénients](https://www.echosdunet.net/dossiers/fibre-ont-sfp)
 
@@ -52,3 +53,16 @@ Voir:
 https://lafibre.info/remplacer-bbox/remplacer-la-bbox-pure-fibre-par-un-mikrotik/
 https://lafibre.info/remplacer-bbox/test-glasfaser-modem-2-telekom-pour-remplacement-ont-2-5gbe-synchro-ok-ipv4-ok/
 https://lafibre.info/remplacer-bbox/bbox-must-pas-dont/
+
+## [LEOX LXT-010H-D](https://hack-gpon.org/ont-leox-lxt-010h-d/)
+Dispo ici: https://www.wisp.pl/p10826,leox-ont-lxt-010h-d-gpon.html
+Commandes pour Bouygues:
+```
+flash set GPON_SN SMBSxxxxxxxx   n. de série
+flash set PON_VENDOR_ID SMBS
+flash set GPON_PLOAM_PASSWD 0x00000yyyyyyyyyyyyyyy    IMEI
+```
+[Conf Leox](https://lafibre.info/remplacer-livebox/mise-en-route-leox-lxt-010h-d/528/)
+[Conf Reseau](https://syscall.eu/blog/2021/10/04/livebox_replacement/)
+[Conf Reseau systemd](https://lafibre.info/remplacer-bbox/retour-dexperience-ont-externe-debian-sur-ikoolcore-r2-max-2x10g-2x2-5g/)
+[Conf Reseau systemd2](https://lafibre.info/remplacer-bbox/ipv6-sur-debian/)
