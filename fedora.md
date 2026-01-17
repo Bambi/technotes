@@ -50,6 +50,68 @@ Support only fedora, redhat, ubuntu and arch. See also [community images](https:
 - `flatpak update`: update installed applications to latest version
 - `flatpak uninstall <APP-ID>`: uninstall app
 
+## RPM
+Red Hat Package Manager (`dpkg` equivalent). Basic syntax is `rpm [options] [package_name]`.
+Options:
+- `-i, –install` 	Installs a package
+- `-e, –erase` 	  Removes a package
+- `-h, –hash` 	  Prints a progress bar (hash marks) as the package installs
+- `-l, –list` 	  Lists files in a package
+- `-q, –query` 	  Queries a package
+- `-s, –state` 	  Displays the state of the listed files
+- `-U, –upgrade` 	Upgrades a package
+- `-v, –verbose` 	Provides more detailed output
+- `-V, –verify` 	Verifies the integrity of installed packages
+- `-a, –all` 	    Queries all installed packages
+
+Typical commands:
+- `rpm -ivh <rpm>`: install a package
+- `rpm -Uvh <rpm>`: update a package
+- `rpm -evh <pkg name>`: uninstall a package
+- `rpm -Vv <pkg name>`: check integrity of package
+- `rpm -qs <pkg name>`: display the state of each file in the package
+- `rpm -qip <rpm>`: gather information about a package
+- `rpm -ivh --test <rpm>`: simulate package installation
+- `rpm -qa`: list all installed packages
+
+Rpm database can be queried at [rpmfind](https://rpmfind.net/).
+
+## DNF
+DNF (Dandified yum, `apt` equivalent) replaces YUM and is a wrapper around rpm to:
+- download packages from the network
+- manage package dependencies
+
+General syntax is `dnf [options] <command> [<args>...]`.
+`args` can be a package name, a group name, or subcommand specific to the command.
+- `dnf search <name>`: search package
+- `dnf install <name>`: install a package
+- `dnf info <name>`: show information about a package
+- `dnf list installed`: show installed packages
+- `dnf remove <name>`: remove a package
+- `dnf autoremove`: remove unneeded packages
+- `dnf upgrade`: update installed packages
+- `dnf group list`: show groups
+- `dnf group info <group name>`: show packages in a group
+- `dnf group install <group name>`: install a group package
+- `dnf repolist all`: list available repos
+- `dnf repolist enabled`: show enabled repos
+- `dnf config-manager --set-[enabled|disabled] <depot>`: enable/disable a depot
+- `dnf history`: show transaction history
+- `dnf deplist <name>`: show package dependency
+- `dnf provides <file path>`: show packet providing a file
+- `dnf repoquery --whatrequires <name>`: show packets that need a package
+- `dnf repoquery --userinstalled`: show packaets installed by the user (ignore dependencies)
+- `dnf install -C <rpm>`: install a downloaded package
+
+Standard Fedora main repo might be limitted. To have more software, you can use
+RPM Fusion repos or COPR (Cool Other Package Repo; PPA equivalent) repos.
+- `dnf install dnf-plugins-core`: required to use copr repos
+- `dnf copr search <name>`: search copr repo
+- `dnf copr enable [user]/[project]`: enable a copr repo
+- `dnf copr list [--enabled]`: list added copr repos
+
+Packages are installed from a copr repo with the normal dnf command (`dnf install`).
+
 ## [Universal Blue](https://github.com/ublue-os/main)
 Community project that builds custom images based on atomic Fedora desktops. Add over Silverblue:
 - hardware acceleration, codecs
@@ -82,7 +144,8 @@ Possible solutions to use the Nix package manager with [fedora atomic](https://g
 - use [thrix](https://thrix.github.io/nix-toolbox/) toolbx image: `toolbox create --image ghcr.io/thrix/nix-toolbox:42`
 
 ## Building a Custom Image
-- use ublue official [template](https://github.com/ublue-os/image-template)
+- use ublue official [template](https://github.com/ublue-os/image-template) or the
+  [ue-build](https://blue-build.org/) [template](https://github.com/blue-build/template)
 - example [here](https://github.com/martinpitt/workstation-bootc)
 - other images [here](https://universal-blue.discourse.group/t/list-of-community-created-custom-images/340)
 
